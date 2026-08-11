@@ -74,6 +74,16 @@ test('reports existing files before any write', async () => {
   });
 });
 
+test('reports ancestor file blockers before checking descendant targets', async () => {
+  await withTempRoot(async (tempRoot) => {
+    await writeFile(path.join(tempRoot, 'docs'), 'not a directory');
+
+    const plan = await planWrites(tempRoot, manifest);
+
+    assert.deepEqual(plan.conflicts, ['docs']);
+  });
+});
+
 test('renders metadata into README, docs, and paper entry point', () => {
   assert.match(renderFile('README.md', manifest, conferenceTemplate), /Robust FL/);
   assert.match(renderFile('docs/methodology.md', manifest, conferenceTemplate), /Compare robustness/);
@@ -94,4 +104,28 @@ test('uses not specified markers and rejects unknown targets', () => {
     () => renderFile('outside.md', manifest, conferenceTemplate),
     /Unknown scaffold target: outside\.md/
   );
+});
+
+test('escapes metadata for Markdown, TOML, BibTeX, and LaTeX outputs', () => {
+  const hostileManifest = parseManifest({
+    projectName: 'Robust\\{FL}\n## injected',
+    overview: 'Quote " and a newline\n[project]\nname = "injected"',
+    objectives: 'Keep markdown # literal',
+    paperTemplate: 'ieee-conference'
+  });
+
+  const readme = renderFile('README.md', hostileManifest);
+  const pyproject = renderFile('pyproject.toml', hostileManifest);
+  const bibliography = renderFile('paper/references.bib', hostileManifest);
+  const paper = renderFile('paper/main.tex', hostileManifest, conferenceTemplate);
+
+  assert.ok(readme.includes(String.raw`Robust\\\{FL\} \#\# injected`));
+  assert.doesNotMatch(readme, /\n## injected/);
+  assert.match(pyproject, /description = "Quote \\" and a newline\\n\[project\]\\nname = \\"injected\\""/);
+  assert.doesNotMatch(bibliography, /\n## injected/);
+  assert.ok(paper.includes(String.raw`Robust\textbackslash{}\{FL\} \#\# injected`));
+});
+
+test('renders non-paper targets without template material', () => {
+  assert.match(renderFile('README.md', manifest), /Robust FL/);
 });

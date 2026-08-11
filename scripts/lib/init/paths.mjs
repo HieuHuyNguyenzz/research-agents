@@ -1,4 +1,4 @@
-import { access } from 'node:fs/promises';
+import { lstat } from 'node:fs/promises';
 import path from 'node:path';
 
 const GENERATED_FILES = Object.freeze([
@@ -60,12 +60,12 @@ export const TARGET_DIRECTORIES = Object.freeze([
   ...new Set(TARGET_PATHS.flatMap(parentDirectories))
 ].sort());
 
-async function exists(targetPath) {
+async function pathKind(targetPath) {
   try {
-    await access(targetPath);
-    return true;
+    const status = await lstat(targetPath);
+    return status.isDirectory() ? 'directory' : 'file';
   } catch (error) {
-    if (error?.code === 'ENOENT') return false;
+    if (error?.code === 'ENOENT') return undefined;
     throw error;
   }
 }
@@ -83,9 +83,24 @@ export async function planWrites(rootDir, manifest) {
 
   const root = path.resolve(rootDir);
   const conflicts = [];
+  const blockedDirectories = new Set();
+
+  for (const directory of TARGET_DIRECTORIES) {
+    if (parentDirectories(directory).some((parent) => blockedDirectories.has(parent))) {
+      continue;
+    }
+
+    if (await pathKind(path.join(root, ...directory.split('/'))) === 'file') {
+      conflicts.push(directory);
+      blockedDirectories.add(directory);
+    }
+  }
 
   for (const relativePath of TARGET_PATHS) {
-    if (await exists(path.join(root, ...relativePath.split('/')))) {
+    const hasBlockedAncestor = parentDirectories(relativePath)
+      .some((directory) => blockedDirectories.has(directory));
+
+    if (!hasBlockedAncestor && await pathKind(path.join(root, ...relativePath.split('/')))) {
       conflicts.push(relativePath);
     }
   }
