@@ -87,6 +87,11 @@ test('rejects a skill that names a platform tool', () => {
   assert.deepEqual(errors, ['skills/example/SKILL.md: shared skills must not name target tools: webfetch']);
 });
 
+test('permits ordinary prose that uses generic action words', () => {
+  const errors = validateSkill('skills/example/SKILL.md', '---\nname: example\ndescription: Example\n---\n\nRead files before a task.\n');
+  assert.deepEqual(errors, []);
+});
+
 test('validates every committed shared skill', async () => {
   assert.deepEqual(await validateSkillTree(process.cwd()), []);
 });
@@ -170,7 +175,7 @@ Create `scripts/lib/content.mjs` with these concrete rules:
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-const TARGET_TOOLS = ['apply_patch', 'bash', 'glob', 'grep', 'read', 'task', 'todowrite', 'webfetch'];
+const TARGET_TOOLS = ['apply_patch', 'bash', 'glob', 'grep', 'todowrite', 'webfetch', 'Bash', 'Read', 'Task'];
 
 export function parseFrontmatter(markdown) {
   const match = markdown.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
@@ -189,7 +194,7 @@ export function validateSkill(relativePath, markdown) {
   for (const field of ['name', 'description']) {
     if (!parsed.attributes.get(field)) errors.push(`${relativePath}: missing required frontmatter field: ${field}`);
   }
-  const namedTools = TARGET_TOOLS.filter((tool) => new RegExp(`\\\\b${tool}\\\\b`, 'i').test(parsed.body));
+  const namedTools = TARGET_TOOLS.filter((tool) => new RegExp(`\\\\`${tool}\\\\``, 'i').test(parsed.body));
   if (namedTools.length) errors.push(`${relativePath}: shared skills must not name target tools: ${namedTools.join(', ')}`);
   return errors;
 }
