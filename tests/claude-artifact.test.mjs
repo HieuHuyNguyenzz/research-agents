@@ -8,11 +8,13 @@ test('Claude plugin declares a SessionStart command hook', async () => {
   const entry = hooks.hooks.SessionStart[0];
   assert.equal(entry.matcher, 'startup|clear|compact');
   assert.equal(entry.hooks[0].type, 'command');
-  assert.match(entry.hooks[0].command, /run-hook\.cmd.*session-start/);
+  assert.equal(entry.hooks[0].command, 'bash "${CLAUDE_PLUGIN_ROOT}/hooks/session-start"');
 });
 
 test('session-start emits Claude Code additional context and does not write files', { skip: process.platform === 'win32' }, async () => {
-  const result = spawnSync('bash', ['hooks/session-start'], { env: { ...process.env, CLAUDE_PLUGIN_ROOT: process.cwd() }, encoding: 'utf8' });
+  const hooks = JSON.parse(await fs.readFile('hooks/hooks.json', 'utf8'));
+  const command = hooks.hooks.SessionStart[0].hooks[0].command;
+  const result = spawnSync('bash', ['-c', command], { env: { ...process.env, CLAUDE_PLUGIN_ROOT: process.cwd() }, encoding: 'utf8' });
   assert.equal(result.status, 0, result.stderr);
   const output = JSON.parse(result.stdout);
   assert.equal(output.hookSpecificOutput.hookEventName, 'SessionStart');
