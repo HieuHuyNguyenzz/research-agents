@@ -18,7 +18,9 @@ const TEMPLATE_REGISTRY = Object.freeze({
 });
 
 export function getTemplateDefinition(id) {
-  const definition = TEMPLATE_REGISTRY[id];
+  const definition = Object.hasOwn(TEMPLATE_REGISTRY, id)
+    ? TEMPLATE_REGISTRY[id]
+    : undefined;
 
   if (!definition) {
     throw new Error(`Unsupported paper template: ${id}`);

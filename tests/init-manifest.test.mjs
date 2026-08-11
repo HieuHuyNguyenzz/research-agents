@@ -96,3 +96,12 @@ test('exposes pinned definitions for both IEEE presets', () => {
 test('throws when a template id is unsupported', () => {
   assert.throws(() => getTemplateDefinition('acl'), /Unsupported paper template: acl/);
 });
+
+test('rejects inherited object property names as unsupported template ids', () => {
+  for (const id of ['__proto__', 'toString', 'constructor']) {
+    assert.throws(
+      () => getTemplateDefinition(id),
+      new RegExp(`Unsupported paper template: ${id}`)
+    );
+  }
+});
