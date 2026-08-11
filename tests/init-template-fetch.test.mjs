@@ -46,6 +46,15 @@ test('extracts source text instead of materializing an Overleaf-like HTML page',
   assert.doesNotMatch(material.text, /<html>/i);
 });
 
+test('extracts a source nested in correctly paired pre and code elements', async () => {
+  const material = await fetchTemplate(conferenceDefinition, {
+    fetchImpl: async () => new Response(`<!doctype html><html><body><pre><code>${conferenceSource}</code></pre></body></html>`)
+  });
+
+  assert.equal(material.text, conferenceSource);
+  assert.doesNotMatch(material.text, /<\/?code>/i);
+});
+
 test('rejects a journal source for the conference preset', async () => {
   await assert.rejects(
     fetchTemplate(conferenceDefinition, {
@@ -79,6 +88,20 @@ test('aborts a source fetch that exceeds its timeout', async () => {
       fetchImpl: async (_url, { signal }) => new Promise((_resolve, reject) => {
         signal.addEventListener('abort', () => reject(signal.reason), { once: true });
       })
+    }),
+    /timed out/
+  );
+});
+
+test('aborts a response whose body stalls after headers arrive', async () => {
+  const stalledBody = new ReadableStream({
+    start() {}
+  });
+
+  await assert.rejects(
+    fetchTemplate(conferenceDefinition, {
+      timeoutMs: 10,
+      fetchImpl: async () => new Response(stalledBody)
     }),
     /timed out/
   );
@@ -143,6 +166,24 @@ test('does not write a validated source whose SHA-256 was changed', async () => 
   });
 });
 
+test('does not write fabricated template provenance URLs', async () => {
+  await withTempDirectory(async (root) => {
+    const paperDir = path.join(root, 'paper');
+    const material = await fetchTemplate(conferenceDefinition, {
+      fetchImpl: async () => new Response(conferenceSource)
+    });
+
+    await assert.rejects(
+      materializeTemplate(paperDir, {
+        ...material,
+        sourceUrl: 'https://example.invalid/fabricated-template.tex'
+      }, conferenceDefinition),
+      /source URL does not match/
+    );
+    await assert.rejects(access(paperDir));
+  });
+});
+
 test('requires IEEEtran with the selected mode', () => {
   assert.throws(
     () => validateTemplateSource(String.raw`\documentclass[conference]{article}`, 'conference'),
@@ -151,5 +192,10 @@ test('requires IEEEtran with the selected mode', () => {
   assert.throws(
     () => validateTemplateSource(String.raw`\documentclass{IEEEtran}`, 'conference'),
     /expected conference mode/
+  );
+  assert.throws(
+    () => validateTemplateSource(String.raw`% \documentclass[conference]{IEEEtran}
+\documentclass[conference]{article}`, 'conference'),
+    /IEEEtran/
   );
 });

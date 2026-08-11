@@ -41,7 +41,7 @@ function fetchOptions(definition, options) {
   };
 }
 
-async function readBoundedBody(response, maxBytes) {
+async function readBoundedBody(response, maxBytes, signal) {
   const declaredLength = response.headers?.get?.('content-length');
   if (declaredLength && Number(declaredLength) > maxBytes) {
     throw new Error(`Template download exceeds maximum download size of ${maxBytes} bytes`);
@@ -54,6 +54,10 @@ async function readBoundedBody(response, maxBytes) {
   const reader = response.body.getReader();
   const chunks = [];
   let size = 0;
+  const cancelReader = () => {
+    void reader.cancel().catch(() => {});
+  };
+  signal?.addEventListener('abort', cancelReader, { once: true });
   try {
     while (true) {
       const { done, value } = await reader.read();
@@ -67,6 +71,7 @@ async function readBoundedBody(response, maxBytes) {
       chunks.push(chunk);
     }
   } finally {
+    signal?.removeEventListener('abort', cancelReader);
     reader.releaseLock();
   }
 
@@ -97,11 +102,34 @@ function decodeHtmlEntities(value) {
 function extractPublicSource(text) {
   if (!/^\s*<(?:!doctype\s+html|html\b)/i.test(text)) return text;
 
-  for (const match of text.matchAll(/<(?:pre|code)\b[^>]*>([\s\S]*?)<\/(?:pre|code)\s*>/gi)) {
-    const candidate = decodeHtmlEntities(match[1].replace(/<br\s*\/?\s*>/gi, '\n'));
-    if (/\\documentclass\b/.test(candidate)) return candidate;
+  const sourceBlocks = [
+    /<pre\b[^>]*>([\s\S]*?)<\/pre\s*>/gi,
+    /<code\b[^>]*>([\s\S]*?)<\/code\s*>/gi
+  ];
+  for (const pattern of sourceBlocks) {
+    for (const match of text.matchAll(pattern)) {
+      const inner = match[1].trim().match(/^<code\b[^>]*>([\s\S]*?)<\/code\s*>$/i);
+      const candidate = decodeHtmlEntities((inner ? inner[1] : match[1])
+        .replace(/<br\s*\/?\s*>/gi, '\n'));
+      if (/\\documentclass\b/.test(candidate)) return candidate;
+    }
   }
   throw new Error('Template page did not contain a readable LaTeX source');
+}
+
+function stripLatexComments(text) {
+  return text.split(/\r\n|\n|\r/).map((line) => {
+    let backslashes = 0;
+    for (let index = 0; index < line.length; index += 1) {
+      if (line[index] === '\\') {
+        backslashes += 1;
+        continue;
+      }
+      if (line[index] === '%' && backslashes % 2 === 0) return line.slice(0, index);
+      backslashes = 0;
+    }
+    return line;
+  }).join('\n');
 }
 
 /** Validates that a LaTeX source uses IEEEtran in the requested IEEE mode. */
@@ -112,7 +140,8 @@ export function validateTemplateSource(text, expectedClassOption) {
     throw new TypeError('Expected class option must be conference or journal');
   }
 
-  const documentClasses = [...text.matchAll(/\\documentclass\s*(?:\[([^\]]*)\])?\s*\{\s*IEEEtran\s*\}/g)];
+  const documentClasses = [...stripLatexComments(text)
+    .matchAll(/\\documentclass\s*(?:\[([^\]]*)\])?\s*\{\s*IEEEtran\s*\}/g)];
   if (documentClasses.length === 0) {
     throw new Error('Template source must declare an IEEEtran document class');
   }
@@ -148,45 +177,48 @@ export async function fetchTemplate(definition, options = {}) {
   } = fetchOptions(definition, options);
   const controller = new AbortController();
   let timer;
+  const timeoutError = new Error(`Template download timed out after ${timeoutMs} ms`);
   const timeout = new Promise((_, reject) => {
     timer = setTimeout(() => {
-      controller.abort();
-      reject(new Error(`Template download timed out after ${timeoutMs} ms`));
+      reject(timeoutError);
+      controller.abort(timeoutError);
     }, timeoutMs);
   });
 
-  let response;
   try {
-    response = await Promise.race([
+    const response = await Promise.race([
       fetchImpl(sourceUrl, { signal: controller.signal }),
       timeout
     ]);
+
+    if (!response || typeof response !== 'object') {
+      throw new Error('Template fetch returned no response');
+    }
+    if (!response.ok) {
+      throw new Error(`Template download failed with HTTP ${response.status}`);
+    }
+
+    const bytes = await Promise.race([
+      readBoundedBody(response, maxBytes, controller.signal),
+      timeout
+    ]);
+    let responseText;
+    try {
+      responseText = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+    } catch {
+      throw new Error('Template source is not valid UTF-8');
+    }
+    const text = extractPublicSource(responseText);
+    validateTemplateSource(text, expectedClassOption);
+
+    return {
+      text,
+      sourceUrl,
+      sha256: sha256(Buffer.from(text, 'utf8'))
+    };
   } finally {
     clearTimeout(timer);
   }
-
-  if (!response || typeof response !== 'object') {
-    throw new Error('Template fetch returned no response');
-  }
-  if (!response.ok) {
-    throw new Error(`Template download failed with HTTP ${response.status}`);
-  }
-
-  const bytes = await readBoundedBody(response, maxBytes);
-  let responseText;
-  try {
-    responseText = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
-  } catch {
-    throw new Error('Template source is not valid UTF-8');
-  }
-  const text = extractPublicSource(responseText);
-  validateTemplateSource(text, expectedClassOption);
-
-  return {
-    text,
-    sourceUrl,
-    sha256: sha256(Buffer.from(text, 'utf8'))
-  };
 }
 
 function provenance(metadata, material) {
@@ -195,7 +227,7 @@ function provenance(metadata, material) {
     metadata?.expectedClassOption,
     'Template expectedClassOption'
   );
-  const sourceUrl = nonEmptyString(material?.sourceUrl, 'Template sourceUrl');
+  const sourceUrl = nonEmptyString(metadata?.sourceUrl, 'Template sourceUrl');
   const retrievedAt = new Date().toISOString();
 
   return `# Template provenance\n\n- Template ID: ${id}\n- Source URL: ${sourceUrl}\n- Retrieved at (UTC): ${retrievedAt}\n- SHA-256: ${material.sha256}\n- Expected class option: ${expectedClassOption}\n\nReview the template guidance before submission.\n`;
@@ -212,6 +244,11 @@ export async function materializeTemplate(paperDir, material, metadata) {
     metadata?.expectedClassOption,
     'Template expectedClassOption'
   );
+  const sourceUrl = nonEmptyString(material?.sourceUrl, 'Template sourceUrl');
+  const configuredSourceUrl = nonEmptyString(metadata?.sourceUrl, 'Configured template sourceUrl');
+  if (sourceUrl !== configuredSourceUrl) {
+    throw new Error('Template source URL does not match the configured definition');
+  }
   validateTemplateSource(text, expectedClassOption);
 
   const expectedDigest = nonEmptyString(material?.sha256, 'Template SHA-256');
