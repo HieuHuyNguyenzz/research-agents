@@ -15,7 +15,7 @@ function tomlString(value) {
 }
 
 function bibTeXText(value) {
-  return singleLine(value).replace(/[\\{}]/g, '\\$&');
+  return singleLine(value).replace(/[\\{}%]/g, '\\$&');
 }
 
 function listOrNotSpecified(values) {

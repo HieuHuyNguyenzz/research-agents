@@ -123,6 +123,12 @@ test('escapes metadata for Markdown, TOML, BibTeX, and LaTeX outputs', () => {
   assert.doesNotMatch(readme, /\n## injected/);
   assert.match(pyproject, /description = "Quote \\" and a newline\\n\[project\]\\nname = \\"injected\\""/);
   assert.doesNotMatch(bibliography, /\n## injected/);
+  assert.match(
+    renderFile('paper/references.bib', parseManifest({
+      projectName: 'Study 100%', overview: 'Percent handling.', paperTemplate: 'ieee-conference'
+    })),
+    /Study 100\\%/
+  );
   assert.ok(paper.includes(String.raw`Robust\textbackslash{}\{FL\} \#\# injected`));
 });
 
