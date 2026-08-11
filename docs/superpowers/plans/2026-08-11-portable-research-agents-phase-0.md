@@ -323,7 +323,7 @@ test('Claude plugin declares a SessionStart command hook', async () => {
   const entry = hooks.hooks.SessionStart[0];
   assert.equal(entry.matcher, 'startup|clear|compact');
   assert.equal(entry.hooks[0].type, 'command');
-  assert.match(entry.hooks[0].command, /run-hook\.cmd.*session-start/);
+  assert.match(entry.hooks[0].command, /session-start/);
 });
 
 test('session-start emits Claude Code additional context and does not write files', { skip: process.platform === 'win32' }, () => {
@@ -367,7 +367,7 @@ Create `hooks/hooks.json`:
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" session-start",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/session-start\"",
             "shell": "bash",
             "async": false
           }
