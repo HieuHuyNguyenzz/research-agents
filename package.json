@@ -1,0 +1,12 @@
+{
+  "name": "research-agents",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "check:content": "node scripts/check-shared-content.mjs",
+    "test": "node --test tests",
+    "verify": "npm run check:content && npm test"
+  }
+}
