@@ -1,0 +1,9 @@
+{
+  "name": "research-agents",
+  "version": "0.1.0",
+  "description": "Portable research skills for coding agents.",
+  "license": "MIT",
+  "keywords": ["research", "skills", "literature", "experiments"],
+  "skills": "./skills/",
+  "hooks": {}
+}
