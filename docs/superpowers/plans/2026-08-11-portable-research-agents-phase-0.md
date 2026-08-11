@@ -116,7 +116,7 @@ Create `package.json`:
   "engines": { "node": ">=20" },
   "scripts": {
     "check:content": "node scripts/check-shared-content.mjs",
-    "test": "node --test tests",
+    "test": "node --test",
     "verify": "npm run check:content && npm test"
   }
 }
