@@ -16,11 +16,15 @@ Inspect the whole repository and the existing target first: project instructions
 ## Shared edit contract
 
 - Write directly to `paper/sections/introduction.tex`; create it if absent.
+- If the existing manuscript uses a noncanonical included section path, edit
+  that path rather than creating a parallel canonical file and report the
+  deviation.
 - Preserve unrelated content and surrounding conventions. Update an existing
   introduction instead of appending a duplicate.
 - Separate observed evidence from interpretation. Mark missing evidence,
   assumptions, and unresolved citations for follow-up; do not invent facts.
-- Use existing citation keys only; do not fabricate a citation or source.
+- Use existing citation keys only, unless the user explicitly supplies or
+  requests a new source; do not fabricate a citation or source.
 - Keep LaTeX valid, including escaping special characters and preserving the
   target's fragment structure.
 - Report changed files, claims and evidence used, assumptions, unresolved

@@ -71,6 +71,11 @@ function assertPaperWritingSkillContract(name, text, phrases, target) {
   assert.match(text, /direct|write/i);
   assert.match(text, /preserv|existing/i);
   assert.match(text, /missing|do not invent|must not/i);
+  if (target) {
+    assert.match(text, /whole repository|entire repository/i);
+    assert.match(text, /different (?:section )?layout|alternate (?:section )?layout/i);
+    assert.match(text, /user\s+explicitly\s+(?:supplies|provides|requests)[\s\S]{0,120}?(?:new\s+)?(?:citation|source)/i);
+  }
   for (const reference of DISALLOWED_TOOL_REFERENCES) {
     assert.doesNotMatch(text, reference);
   }
@@ -96,7 +101,7 @@ test(`${REVIEW_SKILL} has the review-only contract`, async () => {
 });
 
 function validAbstractSkill(body) {
-  return `---\nname: writing-paper-abstract\ndescription: Use when drafting an abstract.\n---\n\n${body}`;
+  return `---\nname: writing-paper-abstract\ndescription: Use when drafting an abstract.\n---\n\nInspect the whole repository and the existing target first.\n\nWrite directly to \`paper/sections/abstract.tex\`; create it if absent. If the manuscript has a clearly established different section layout, follow that layout instead of creating a duplicate. Preserve existing text when information is missing and do not invent facts. Use existing citation keys only, unless the user explicitly supplies or requests a new source.\n\n${body}`;
 }
 
 function validReviewSkill(body) {
@@ -121,8 +126,38 @@ ${body}`;
 }
 
 test('paper-writing contract rejects a path that differs from the required literal', () => {
-  const text = validAbstractSkill(
-    'Write an abstract with evidence and citation in paper/sections/abstractXtex. Preserve existing text when information is missing.'
+  const text = validAbstractSkill('Write an abstract with evidence and citation.').replaceAll(
+    'paper/sections/abstract.tex', 'paper/sections/abstractXtex'
+  );
+  assert.throws(() => assertPaperWritingSkillContract(
+    'writing-paper-abstract', text, PAPER_WRITERS['writing-paper-abstract'].phrases,
+    PAPER_WRITERS['writing-paper-abstract'].target
+  ));
+});
+
+test('valid writer fixture satisfies the complete writer contract', () => {
+  assert.doesNotThrow(() => assertPaperWritingSkillContract(
+    'writing-paper-abstract', validAbstractSkill('Write an abstract with evidence and citation.'),
+    PAPER_WRITERS['writing-paper-abstract'].phrases,
+    PAPER_WRITERS['writing-paper-abstract'].target
+  ));
+});
+
+test('writer contract rejects omitted alternate-layout exception', () => {
+  const text = validAbstractSkill('Write an abstract with evidence and citation.').replace(
+    ' If the manuscript has a clearly established different section layout, follow that layout instead of creating a duplicate.',
+    ''
+  );
+  assert.throws(() => assertPaperWritingSkillContract(
+    'writing-paper-abstract', text, PAPER_WRITERS['writing-paper-abstract'].phrases,
+    PAPER_WRITERS['writing-paper-abstract'].target
+  ));
+});
+
+test('writer contract rejects omitted explicit user-supplied citation exception', () => {
+  const text = validAbstractSkill('Write an abstract with evidence and citation.').replace(
+    ', unless the user explicitly supplies or requests a new source',
+    ''
   );
   assert.throws(() => assertPaperWritingSkillContract(
     'writing-paper-abstract', text, PAPER_WRITERS['writing-paper-abstract'].phrases,
