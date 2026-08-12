@@ -19,3 +19,16 @@
 ## Scope
 
 No manuscript, repository, or other user files were modified by the review skill.
+
+## Fix Round 1
+
+- Added a `validReviewSkill` fixture and negative review-contract regressions.
+- The regressions reject omitted complete-paper/repository inspection, a missing
+  review dimension, malformed severity values, missing finding fields,
+  permission to modify files, and platform-specific tool references.
+- Focused test: `node --test tests/paper-writing-skills.test.mjs`
+  - 15 tests passed: seven skill contracts, two existing regressions, and six
+    review-specific negative regressions.
+  - One discovery failure remains, as expected until Task 4 updates the skill
+    index and README.
+- `git diff --check` completed without whitespace errors.

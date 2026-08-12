@@ -24,6 +24,15 @@ const DISALLOWED_TOOL_NAMES = [
   'apply_patch', 'bash', 'glob', 'grep', 'todowrite', 'webfetch', 'Bash', 'Read', 'Task'
 ];
 
+function assertReviewWorkflowContract(text) {
+  assert.match(text, /inspect the complete[\s\S]*?paper[\s\S]*?repository/i);
+  assert.match(text, /\*\*Severity:\*\*[\s\S]*?exactly `blocking`, `important`, or `minor`/i);
+  for (const field of ['Location', 'Evidence', 'Recommendation']) {
+    assert.match(text, new RegExp(`\\*\\*${field}:\\*\\*`));
+  }
+  assert.doesNotMatch(text, /\b(?:may|can|should|must|will|are allowed to)\s+modify files\b/i);
+}
+
 function assertPaperWritingSkillContract(name, text, phrases) {
   assert.match(text, new RegExp(`^name: ${name}$`, 'm'));
   assert.match(text, /^description: Use when\b/m);
@@ -36,7 +45,7 @@ function assertPaperWritingSkillContract(name, text, phrases) {
   assert.match(text, /missing|do not invent|must not/i);
   assert.doesNotMatch(text, new RegExp(`\\b(${DISALLOWED_TOOL_NAMES.join('|')})\\b`, 'i'));
   if (name === 'reviewing-research-paper') {
-    assert.match(text, /severity[^\n]*exactly `blocking`, `important`, or `minor`/i);
+    assertReviewWorkflowContract(text);
     assert.match(text, /do not modify files/i);
     assert.match(text, /user requests fixes/i);
   }
@@ -51,6 +60,27 @@ for (const [name, phrases] of Object.entries(PAPER_SKILLS)) {
 
 function validAbstractSkill(body) {
   return `---\nname: writing-paper-abstract\ndescription: Use when drafting an abstract.\n---\n\n${body}`;
+}
+
+function validReviewSkill(body) {
+  return `---
+name: reviewing-research-paper
+description: Use when assessing a completed research manuscript before submission.
+---
+
+Review the complete paper in \`paper/\` and its supporting repository. Preserve
+existing files and do not modify files; stop unless the user requests fixes.
+
+Inspect correctness, completeness, coherence, venue fit, reproducibility,
+citations, LaTeX, terminology, code, configs, results, result artifacts,
+section ordering, includes, citation-key resolution, and implementation.
+Do not invent missing evidence. Write findings after a concise summary.
+
+Each finding has **Severity:** exactly \`blocking\`, \`important\`, or \`minor\`;
+**Location:** an exact path or section; **Evidence:** observed repository evidence;
+and **Recommendation:** a concrete action.
+
+${body}`;
 }
 
 test('paper-writing contract rejects a path that differs from the required literal', () => {
@@ -68,6 +98,48 @@ test('paper-writing contract rejects plain disallowed tool names', () => {
   );
   assert.throws(() => assertPaperWritingSkillContract(
     'writing-paper-abstract', text, PAPER_SKILLS['writing-paper-abstract']
+  ));
+});
+
+test('review contract rejects an omitted complete-paper and repository inspection', () => {
+  const text = validReviewSkill('Inspect only the abstract.');
+  assert.throws(() => assertPaperWritingSkillContract(
+    'reviewing-research-paper', text, PAPER_SKILLS['reviewing-research-paper']
+  ));
+});
+
+test('review contract rejects a missing required review dimension', () => {
+  const text = validReviewSkill('').replace('LaTeX, ', '');
+  assert.throws(() => assertPaperWritingSkillContract(
+    'reviewing-research-paper', text, PAPER_SKILLS['reviewing-research-paper']
+  ));
+});
+
+test('review contract rejects a malformed severity set', () => {
+  const text = validReviewSkill('').replace('`blocking`, `important`, or `minor`', '`blocking`, `urgent`, or `minor`');
+  assert.throws(() => assertPaperWritingSkillContract(
+    'reviewing-research-paper', text, PAPER_SKILLS['reviewing-research-paper']
+  ));
+});
+
+test('review contract rejects missing structured finding fields', () => {
+  const text = validReviewSkill('').replace('**Evidence:** observed repository evidence;\n', '');
+  assert.throws(() => assertPaperWritingSkillContract(
+    'reviewing-research-paper', text, PAPER_SKILLS['reviewing-research-paper']
+  ));
+});
+
+test('review contract rejects permission to modify files', () => {
+  const text = validReviewSkill('You may modify files while reviewing.');
+  assert.throws(() => assertPaperWritingSkillContract(
+    'reviewing-research-paper', text, PAPER_SKILLS['reviewing-research-paper']
+  ));
+});
+
+test('review contract rejects platform-tool references', () => {
+  const text = validReviewSkill('Use Read to inspect the manuscript.');
+  assert.throws(() => assertPaperWritingSkillContract(
+    'reviewing-research-paper', text, PAPER_SKILLS['reviewing-research-paper']
   ));
 });
 
