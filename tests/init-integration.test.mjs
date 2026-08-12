@@ -11,6 +11,16 @@ async function exists(file) {
   }
 }
 
+function hasCompleteFullEvidence(row) {
+  const [, status, version, date, command, result, evidence] = row;
+  const placeholder = /^(Not recorded|Not yet recorded|—)$/i;
+  return /^Full\b/i.test(status)
+    && [version, date, command, evidence].every((value) => (
+      typeof value === 'string' && value.trim() && !placeholder.test(value)
+    ))
+    && /^(PASS|Passed)$/i.test(result);
+}
+
 test('verify contract includes the init skill and CLI entry point', async () => {
   const pkg = JSON.parse(await fs.readFile('package.json', 'utf8'));
   assert.match(pkg.scripts.verify, /npm test/);
@@ -61,17 +71,40 @@ test('compatibility rows require native smoke evidence before reporting Full sup
   ]);
   assert.equal(rows.length, 3);
   for (const row of rows) {
-    const [, status, , , command, result, evidence] = row;
+    const [, status, version, date, command, result, evidence] = row;
     assert.equal(row.length, header.length);
     if (/^Full\b/i.test(status)) {
-      assert.doesNotMatch(command, placeholder);
-      assert.doesNotMatch(result, placeholder);
-      assert.doesNotMatch(evidence, placeholder);
+      assert.equal(hasCompleteFullEvidence(row), true);
     } else {
       assert.equal(status, 'Unverified (pending recorded smoke test)');
+      assert.match(version, placeholder);
+      assert.match(date, placeholder);
       assert.match(command, placeholder);
       assert.match(result, placeholder);
       assert.match(evidence, placeholder);
     }
   }
 });
+
+const COMPLETE_FULL_ROW = [
+  'Codex', 'Full', '0.1.0', '2026-08-12', 'List the installed research skills.',
+  'PASS', 'docs/evidence/codex-smoke.md', 'Native skill discovery', 'fallback'
+];
+
+test('Full compatibility rows accept complete successful native smoke evidence', () => {
+  assert.equal(hasCompleteFullEvidence(COMPLETE_FULL_ROW), true);
+});
+
+for (const [description, index, value] of [
+  ['an unrecorded tested version', 2, 'Not recorded'],
+  ['an unrecorded tested date', 3, 'Not recorded'],
+  ['an unrecorded native command', 4, 'Not recorded'],
+  ['a failed native result', 5, 'Failed'],
+  ['an unrecorded evidence location', 6, 'Not recorded'],
+]) {
+  test(`Full compatibility rows reject ${description}`, () => {
+    const row = [...COMPLETE_FULL_ROW];
+    row[index] = value;
+    assert.equal(hasCompleteFullEvidence(row), false);
+  });
+}
