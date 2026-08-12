@@ -6,8 +6,9 @@ description: Use when assessing a completed research manuscript for submission r
 # Reviewing a Research Paper
 
 Review the complete paper and its supporting repository as a manuscript-quality
-assessment. This is a review, not a revision: preserve existing files and do
-not modify files. Stop after review output unless the user requests fixes.
+assessment. This is a review, not a revision: preserve existing files. The review does not modify files.
+Do not modify files.
+Stop after review output unless the user requests fixes.
 
 ## Inspect the evidence
 
