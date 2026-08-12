@@ -25,8 +25,9 @@ Inspect the whole repository and the existing target first: project instructions
   experimental results instead of appending a duplicate.
 - Separate observed evidence from interpretation. Mark missing evidence,
   assumptions, and unresolved citations for follow-up; do not invent facts.
-- Use existing citation keys only, unless the user explicitly supplies or
-  requests a new source; do not fabricate a citation or source.
+- Use existing citation keys only. A new source is allowed only when the user
+  explicitly supplies or requests it; never fabricate a citation or source,
+  and mark unresolved citations for follow-up.
 - Keep LaTeX valid, including escaping special characters and preserving the
   target's fragment structure.
 - Report changed files, claims and evidence used, assumptions, unresolved
