@@ -59,6 +59,25 @@ After initialization, the shared research skills support this sequence:
 Ask the coding agent naturally, for example: `Analyze the experiment results in
 results/raw and prepare a paper-ready notebook.`
 
+## Paper-writing workflow
+
+For a manuscript, use `reading-research-paper` to establish the source
+evidence, then draft the necessary section(s), analyze the available results,
+and finish with an independent review:
+
+1. `reading-research-paper`
+2. `writing-paper-abstract`, `writing-paper-introduction`,
+   `writing-paper-related-work`, `writing-paper-methodology`,
+   `writing-paper-experimental-results`, and `writing-paper-conclusion`
+3. `analyzing-experiment-results`
+4. `reviewing-research-paper`
+
+The six writing skills edit their corresponding files under `paper/sections/`
+directly. `reviewing-research-paper` inspects `paper/` and the supporting
+repository, then only reports findings unless you request fixes.
+
+Ask naturally, for example: `Write the methodology section from the current code and configs.`
+
 ## Generated project layout
 
 The initializer creates a consistent research workspace:

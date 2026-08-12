@@ -3,22 +3,42 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import test from 'node:test';
 
-const PAPER_SKILLS = {
-  'writing-paper-abstract': ['paper/sections/abstract.tex', 'abstract', 'evidence', 'citation'],
-  'writing-paper-introduction': ['paper/sections/introduction.tex', 'introduction', 'gap', 'contributions'],
-  'writing-paper-related-work': ['paper/sections/related-work.tex', 'related work', 'citation', 'bibliography'],
-  'writing-paper-methodology': ['paper/sections/methodology.tex', 'methodology', 'code', 'algorithm'],
-  'writing-paper-experimental-results': ['paper/sections/experimental-results.tex', 'experimental results', 'metrics', 'uncertainty'],
-  'writing-paper-conclusion': ['paper/sections/conclusion.tex', 'conclusion', 'limitations', 'future work'],
-  'reviewing-research-paper': [
+const PAPER_WRITERS = {
+  'writing-paper-abstract': {
+    target: 'paper/sections/abstract.tex',
+    phrases: ['abstract', 'evidence', 'citation']
+  },
+  'writing-paper-introduction': {
+    target: 'paper/sections/introduction.tex',
+    phrases: ['introduction', 'gap', 'contributions']
+  },
+  'writing-paper-related-work': {
+    target: 'paper/sections/related-work.tex',
+    phrases: ['related work', 'citation', 'bibliography']
+  },
+  'writing-paper-methodology': {
+    target: 'paper/sections/methodology.tex',
+    phrases: ['methodology', 'code', 'algorithm']
+  },
+  'writing-paper-experimental-results': {
+    target: 'paper/sections/experimental-results.tex',
+    phrases: ['experimental results', 'metrics', 'uncertainty']
+  },
+  'writing-paper-conclusion': {
+    target: 'paper/sections/conclusion.tex',
+    phrases: ['conclusion', 'limitations', 'future work']
+  }
+};
+
+const REVIEW_SKILL = 'reviewing-research-paper';
+const REVIEW_PHRASES = [
     'complete paper', 'correctness', 'completeness', 'coherence', 'venue fit',
     'reproducibility', 'citation', 'latex', 'code', 'configs', 'results',
     'section ordering', 'includes', 'citation-key', 'terminology',
     'result artifacts', 'implementation', 'summary', 'findings',
     'blocking', 'important', 'minor', 'location', 'evidence', 'recommendation',
     'does not modify'
-  ]
-};
+];
 
 const DISALLOWED_TOOL_NAMES = [
   'apply_patch', 'bash', 'glob', 'grep', 'todowrite', 'webfetch', 'Bash', 'Read', 'Task'
@@ -33,30 +53,41 @@ function assertReviewWorkflowContract(text) {
   assert.doesNotMatch(text, /\b(?:may|can|should|must|will|are allowed to)\s+modify files\b/i);
 }
 
-function assertPaperWritingSkillContract(name, text, phrases) {
+function assertPaperWritingSkillContract(name, text, phrases, target) {
   assert.match(text, new RegExp(`^name: ${name}$`, 'm'));
   assert.match(text, /^description: Use when\b/m);
   assert.ok(text.split('\n').length < 500);
   for (const phrase of phrases) {
     assert.ok(text.toLowerCase().includes(phrase.toLowerCase()), `missing required phrase: ${phrase}`);
   }
+  if (target) {
+    const escapedTarget = target.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    assert.match(text, new RegExp(`write directly to\\s+\\\`${escapedTarget}\\\``, 'i'));
+  }
   assert.match(text, /direct|write/i);
   assert.match(text, /preserv|existing/i);
   assert.match(text, /missing|do not invent|must not/i);
   assert.doesNotMatch(text, new RegExp(`\\b(${DISALLOWED_TOOL_NAMES.join('|')})\\b`, 'i'));
-  if (name === 'reviewing-research-paper') {
+  if (name === REVIEW_SKILL) {
     assertReviewWorkflowContract(text);
     assert.match(text, /do not modify files/i);
     assert.match(text, /user requests fixes/i);
   }
 }
 
-for (const [name, phrases] of Object.entries(PAPER_SKILLS)) {
+for (const [name, { target, phrases }] of Object.entries(PAPER_WRITERS)) {
   test(`${name} has the paper-writing contract`, async () => {
     const text = await fs.readFile(path.join('skills', name, 'SKILL.md'), 'utf8');
-    assertPaperWritingSkillContract(name, text, phrases);
+    assertPaperWritingSkillContract(name, text, phrases, target);
   });
 }
+
+test(`${REVIEW_SKILL} has the review-only contract`, async () => {
+  const text = await fs.readFile(path.join('skills', REVIEW_SKILL, 'SKILL.md'), 'utf8');
+  assertPaperWritingSkillContract(REVIEW_SKILL, text, REVIEW_PHRASES);
+  assert.match(text, /complete `paper\/` tree/i);
+  assert.match(text, /does not modify files/i);
+});
 
 function validAbstractSkill(body) {
   return `---\nname: writing-paper-abstract\ndescription: Use when drafting an abstract.\n---\n\n${body}`;
@@ -88,7 +119,8 @@ test('paper-writing contract rejects a path that differs from the required liter
     'Write an abstract with evidence and citation in paper/sections/abstractXtex. Preserve existing text when information is missing.'
   );
   assert.throws(() => assertPaperWritingSkillContract(
-    'writing-paper-abstract', text, PAPER_SKILLS['writing-paper-abstract']
+    'writing-paper-abstract', text, PAPER_WRITERS['writing-paper-abstract'].phrases,
+    PAPER_WRITERS['writing-paper-abstract'].target
   ));
 });
 
@@ -97,13 +129,14 @@ test('paper-writing contract rejects plain disallowed tool names', () => {
     'Write an abstract with evidence and citation in paper/sections/abstract.tex. Preserve existing text when information is missing. Use apply_patch.'
   );
   assert.throws(() => assertPaperWritingSkillContract(
-    'writing-paper-abstract', text, PAPER_SKILLS['writing-paper-abstract']
+    'writing-paper-abstract', text, PAPER_WRITERS['writing-paper-abstract'].phrases,
+    PAPER_WRITERS['writing-paper-abstract'].target
   ));
 });
 
 test('valid review fixture satisfies the complete review contract', () => {
   assert.doesNotThrow(() => assertPaperWritingSkillContract(
-    'reviewing-research-paper', validReviewSkill(''), PAPER_SKILLS['reviewing-research-paper']
+    REVIEW_SKILL, validReviewSkill(''), REVIEW_PHRASES
   ));
 });
 
@@ -113,50 +146,54 @@ test('review contract rejects an omitted complete-paper and repository inspectio
     'Inspect only the abstract.'
   );
   assert.throws(() => assertPaperWritingSkillContract(
-    'reviewing-research-paper', text, PAPER_SKILLS['reviewing-research-paper']
+    REVIEW_SKILL, text, REVIEW_PHRASES
   ));
 });
 
 test('review contract rejects a missing required review dimension', () => {
   const text = validReviewSkill('').replace('LaTeX, ', '');
   assert.throws(() => assertPaperWritingSkillContract(
-    'reviewing-research-paper', text, PAPER_SKILLS['reviewing-research-paper']
+    REVIEW_SKILL, text, REVIEW_PHRASES
   ));
 });
 
 test('review contract rejects a malformed severity set', () => {
   const text = validReviewSkill('').replace('`blocking`, `important`, or `minor`', '`blocking`, `urgent`, or `minor`');
   assert.throws(() => assertPaperWritingSkillContract(
-    'reviewing-research-paper', text, PAPER_SKILLS['reviewing-research-paper']
+    REVIEW_SKILL, text, REVIEW_PHRASES
   ));
 });
 
 test('review contract rejects missing structured finding fields', () => {
   const text = validReviewSkill('').replace('**Evidence:** observed repository evidence;\n', '');
   assert.throws(() => assertPaperWritingSkillContract(
-    'reviewing-research-paper', text, PAPER_SKILLS['reviewing-research-paper']
+    REVIEW_SKILL, text, REVIEW_PHRASES
   ));
 });
 
 test('review contract rejects permission to modify files', () => {
   const text = validReviewSkill('You may modify files while reviewing.');
   assert.throws(() => assertPaperWritingSkillContract(
-    'reviewing-research-paper', text, PAPER_SKILLS['reviewing-research-paper']
+    REVIEW_SKILL, text, REVIEW_PHRASES
   ));
 });
 
 test('review contract rejects platform-tool references', () => {
   const text = validReviewSkill('Use Read to inspect the manuscript.');
   assert.throws(() => assertPaperWritingSkillContract(
-    'reviewing-research-paper', text, PAPER_SKILLS['reviewing-research-paper']
+    REVIEW_SKILL, text, REVIEW_PHRASES
   ));
 });
 
 test('paper-writing skills are discoverable in the library and README', async () => {
   const index = await fs.readFile('skills/listing-research-skills/SKILL.md', 'utf8');
   const readme = await fs.readFile('README.md', 'utf8');
-  for (const name of Object.keys(PAPER_SKILLS)) {
+  for (const name of [...Object.keys(PAPER_WRITERS), REVIEW_SKILL]) {
     assert.match(index, new RegExp(name));
     assert.match(readme, new RegExp(name));
   }
+  assert.match(index, /writing skills edit their section directly/i);
+  assert.match(index, /review only reports findings/i);
+  assert.match(readme, /reading-research-paper[\s\S]*writing-paper-abstract[\s\S]*analyzing-experiment-results[\s\S]*reviewing-research-paper/i);
+  assert.match(readme, /Write the methodology section from the current code and configs\./);
 });

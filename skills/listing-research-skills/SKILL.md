@@ -17,3 +17,20 @@ that are not installed. The current library includes:
   reproducible analysis notebook.
 - `creating-research-notebook`: create or improve a rerunnable research
   notebook.
+- `writing-paper-abstract`: draft or revise the evidence-grounded abstract in
+  `paper/sections/abstract.tex`.
+- `writing-paper-introduction`: frame the problem, gap, and contributions in
+  `paper/sections/introduction.tex`.
+- `writing-paper-related-work`: position the work using the existing
+  bibliography in `paper/sections/related-work.tex`.
+- `writing-paper-methodology`: describe the implemented method from code and
+  configs in `paper/sections/methodology.tex`.
+- `writing-paper-experimental-results`: report recorded experimental evidence
+  in `paper/sections/experimental-results.tex`.
+- `writing-paper-conclusion`: close with supported findings, limitations, and
+  future work in `paper/sections/conclusion.tex`.
+- `reviewing-research-paper`: assess the complete paper and repository, then
+  report structured submission-readiness findings.
+
+The writing skills edit their section directly. The review only reports findings
+and does not automatically modify files.
