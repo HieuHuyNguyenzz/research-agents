@@ -1,6 +1,6 @@
 ---
-name: using-research-agents
-description: Use at the beginning of work to discover and apply installed research skills.
+name: using-research-skills
+description: Use when beginning work and you need to discover and apply installed research skills before taking task actions.
 ---
 
 Before beginning a task, determine whether an installed research skill applies.

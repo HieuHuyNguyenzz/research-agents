@@ -42,7 +42,7 @@
 ### Task 3: Update discovery documentation
 
 **Files:**
-- Modify: `skills/library-index/SKILL.md`
+- Modify: `skills/listing-research-skills/SKILL.md`
 - Modify: `README.md`
 - Modify: `tests/research-analysis-skills.test.mjs`
 

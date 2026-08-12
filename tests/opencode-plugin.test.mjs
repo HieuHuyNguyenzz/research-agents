@@ -16,5 +16,5 @@ test('OpenCode transform prepends one bootstrap to the first user message', asyn
   const output = { messages: [{ info: { role: 'user' }, parts: [{ type: 'text', text: 'find papers' }] }] };
   await plugin['experimental.chat.messages.transform']({}, output);
   await plugin['experimental.chat.messages.transform']({}, output);
-  assert.equal(output.messages[0].parts.filter((part) => part.text?.includes('using-research-agents')).length, 1);
+  assert.equal(output.messages[0].parts.filter((part) => part.text?.includes('using-research-skills')).length, 1);
 });

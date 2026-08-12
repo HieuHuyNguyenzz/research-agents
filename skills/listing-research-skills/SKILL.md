@@ -1,13 +1,13 @@
 ---
-name: library-index
-description: List installed research skills and their available descriptions.
+name: listing-research-skills
+description: Use when a user asks which research skills are installed or wants a concise capability index.
 ---
 
 List the installed research skills and their descriptions. Do not invent skills
 that are not installed. The current library includes:
 
-- `using-research-agents`: discover and apply an installed research skill.
-- `library-index`: enumerate the installed research skills.
+- `using-research-skills`: discover and apply an installed research skill.
+- `listing-research-skills`: enumerate the installed research skills.
 - `initializing-research-project`: scaffold a reproducible research project.
 - `reading-research-paper`: extract evidence and implementation details from a
   paper.

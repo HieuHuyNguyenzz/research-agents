@@ -24,8 +24,8 @@
 
 ```text
 package.json                                      # ESM scripts and shared version
-skills/using-research-agents/SKILL.md             # Portable bootstrap skill
-skills/library-index/SKILL.md                     # Minimal non-domain library discovery skill
+skills/using-research-skills/SKILL.md             # Portable bootstrap skill
+skills/listing-research-skills/SKILL.md           # Minimal non-domain library discovery skill
 agents/README.md                                  # Explicit phase-0 agent-profile boundary
 references/tool-mapping/{codex,claude-code,opencode}.md
 .codex-plugin/plugin.json                         # Codex native manifest
@@ -51,8 +51,8 @@ README.md                                         # Installation chooser and pro
 
 **Files:**
 - Create: `package.json`
-- Create: `skills/using-research-agents/SKILL.md`
-- Create: `skills/library-index/SKILL.md`
+- Create: `skills/using-research-skills/SKILL.md`
+- Create: `skills/listing-research-skills/SKILL.md`
 - Create: `agents/README.md`
 - Create: `references/tool-mapping/codex.md`
 - Create: `references/tool-mapping/claude-code.md`
@@ -65,7 +65,7 @@ README.md                                         # Installation chooser and pro
 - Produces `parseFrontmatter(markdown: string): { attributes: Map<string, string>, body: string }`.
 - Produces `validateSkill(relativePath: string, markdown: string): string[]`; an empty array means valid.
 - Produces `validateSkillTree(rootDir: string): Promise<string[]>`; every subsequent verification command consumes this.
-- Produces the shared bootstrap skill at `skills/using-research-agents/SKILL.md`, which all platform adapters load by path.
+- Produces the shared bootstrap skill at `skills/using-research-skills/SKILL.md`, which all platform adapters load by path.
 
 - [ ] **Step 1: Write the failing content-contract tests**
 
@@ -122,11 +122,11 @@ Create `package.json`:
 }
 ```
 
-Create `skills/using-research-agents/SKILL.md` with exactly this portable bootstrap body:
+Create `skills/using-research-skills/SKILL.md` with exactly this portable bootstrap body:
 
 ```markdown
 ---
-name: using-research-agents
+name: using-research-skills
 description: Use at the beginning of work to discover and apply installed research skills.
 ---
 
@@ -137,7 +137,7 @@ delegate independent work, or request approval for external changes. If a needed
 capability is unavailable, state the limitation and use the documented fallback.
 ```
 
-Create `skills/library-index/SKILL.md` with frontmatter `name: library-index` and a short body that tells the agent to list installed research skills and their descriptions without inventing missing skills. Create `agents/README.md` stating that Phase 0 deliberately publishes no specialized agent profiles. Add one mapping document per target with the exact target tool names; these files are intentionally outside `skills/`.
+Create `skills/listing-research-skills/SKILL.md` with frontmatter `name: listing-research-skills` and a short body that tells the agent to list installed research skills and their descriptions without inventing missing skills. Create `agents/README.md` stating that Phase 0 deliberately publishes no specialized agent profiles. Add one mapping document per target with the exact target tool names; these files are intentionally outside `skills/`.
 
 Use these exact mapping contents:
 
@@ -304,7 +304,7 @@ git commit -m "feat: add Codex plugin artifact"
 - Create: `tests/claude-artifact.test.mjs`
 
 **Interfaces:**
-- Consumes `skills/using-research-agents/SKILL.md`.
+- Consumes `skills/using-research-skills/SKILL.md`.
 - Produces a Claude Code `SessionStart` hook with matcher `startup|clear|compact`.
 - Produces JSON on stdout whose context is in `hookSpecificOutput.additionalContext`; it writes no files.
 
@@ -331,7 +331,7 @@ test('session-start emits Claude Code additional context and does not write file
   assert.equal(result.status, 0, result.stderr);
   const output = JSON.parse(result.stdout);
   assert.equal(output.hookSpecificOutput.hookEventName, 'SessionStart');
-  assert.match(output.hookSpecificOutput.additionalContext, /using-research-agents/);
+  assert.match(output.hookSpecificOutput.additionalContext, /using-research-skills/);
   assert.match(output.hookSpecificOutput.additionalContext, /Tool Mapping for Claude Code/);
 });
 ```
@@ -387,7 +387,7 @@ Create `hooks/session-start` (mark executable with `chmod +x hooks/session-start
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PLUGIN_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
-SKILL_PATH="${PLUGIN_ROOT}/skills/using-research-agents/SKILL.md"
+SKILL_PATH="${PLUGIN_ROOT}/skills/using-research-skills/SKILL.md"
 MAPPING_PATH="${PLUGIN_ROOT}/references/tool-mapping/claude-code.md"
 CONTENT="$(node -e 'const fs=require("fs"); process.stdout.write(fs.readFileSync(process.argv[1], "utf8"));' "$SKILL_PATH")"
 MAPPING="$(node -e 'const fs=require("fs"); process.stdout.write(fs.readFileSync(process.argv[1], "utf8"));' "$MAPPING_PATH")"
@@ -452,7 +452,7 @@ test('OpenCode transform prepends one bootstrap to the first user message', asyn
   const output = { messages: [{ info: { role: 'user' }, parts: [{ type: 'text', text: 'find papers' }] }] };
   await plugin['experimental.chat.messages.transform']({}, output);
   await plugin['experimental.chat.messages.transform']({}, output);
-  assert.equal(output.messages[0].parts.filter((part) => part.text?.includes('using-research-agents')).length, 1);
+  assert.equal(output.messages[0].parts.filter((part) => part.text?.includes('using-research-skills')).length, 1);
 });
 ```
 
@@ -478,7 +478,7 @@ let bootstrap;
 
 function loadBootstrap() {
   if (bootstrap) return bootstrap;
-  const skill = fs.readFileSync(path.join(skillsDir, 'using-research-agents', 'SKILL.md'), 'utf8').replace(/^---\n[\s\S]*?\n---\n/, '');
+  const skill = fs.readFileSync(path.join(skillsDir, 'using-research-skills', 'SKILL.md'), 'utf8').replace(/^---\n[\s\S]*?\n---\n/, '');
   const mapping = fs.readFileSync(path.join(rootDir, 'references', 'tool-mapping', 'opencode.md'), 'utf8');
   bootstrap = `<IMPORTANT>\n${skill}\n\n${mapping}\n</IMPORTANT>`;
   return bootstrap;
@@ -493,7 +493,7 @@ export async function ResearchAgentsPlugin() {
     },
     async 'experimental.chat.messages.transform'(_input, output) {
       const firstUser = output.messages.find((message) => message.info.role === 'user');
-      if (!firstUser?.parts?.length || firstUser.parts.some((part) => part.text?.includes('using-research-agents'))) return;
+      if (!firstUser?.parts?.length || firstUser.parts.some((part) => part.text?.includes('using-research-skills'))) return;
       firstUser.parts.unshift({ type: 'text', text: loadBootstrap() });
     }
   };
@@ -661,4 +661,4 @@ The plan contains no open-ended implementation markers. Every task names files, 
 
 ### Type and interface consistency
 
-`validateSkillTree` is defined in Task 1 and used only through its documented script. Every adapter loads `skills/using-research-agents/SKILL.md`. The OpenCode exported symbol `ResearchAgentsPlugin` matches the import and test in Task 4. The release-contract test reads the manifests produced in Tasks 2 and 3.
+`validateSkillTree` is defined in Task 1 and used only through its documented script. Every adapter loads `skills/using-research-skills/SKILL.md`. The OpenCode exported symbol `ResearchAgentsPlugin` matches the import and test in Task 4. The release-contract test reads the manifests produced in Tasks 2 and 3.

@@ -2,7 +2,7 @@
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PLUGIN_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
-SKILL_PATH="${PLUGIN_ROOT}/skills/using-research-agents/SKILL.md"
+SKILL_PATH="${PLUGIN_ROOT}/skills/using-research-skills/SKILL.md"
 MAPPING_PATH="${PLUGIN_ROOT}/references/tool-mapping/claude-code.md"
 CONTENT="$(node -e 'const fs=require("fs"); process.stdout.write(fs.readFileSync(process.argv[1], "utf8")); process.stdout.write("__RESEARCH_AGENTS_END__");' "$SKILL_PATH")"
 CONTENT="${CONTENT%__RESEARCH_AGENTS_END__}"
