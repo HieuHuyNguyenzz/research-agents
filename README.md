@@ -78,6 +78,10 @@ repository, then only reports findings unless you request fixes.
 
 Ask naturally, for example: `Write the methodology section from the current code and configs.`
 
+See the [paper-writing guide](docs/paper-writing.md) for the complete skill
+map, direct-write rules, evidence and citation policy, example requests, and
+submission checklist.
+
 ## Generated project layout
 
 The initializer creates a consistent research workspace:

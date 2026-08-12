@@ -14,3 +14,11 @@ summary, and waits for your explicit confirmation before creating files.
 The selected IEEE template is downloaded from its configured source, so this
 step requires network access. The generated `paper/TEMPLATE.md` records the
 selected source for later review.
+
+## Write and review a paper
+
+After initialization, follow the [paper-writing guide](../paper-writing.md).
+For example, ask: `Review the complete paper and repository for evidence,
+citations, reproducibility, and submission readiness.` The
+`reviewing-research-paper` skill reports structured findings; invoke a section
+writer afterward when you want an edit.

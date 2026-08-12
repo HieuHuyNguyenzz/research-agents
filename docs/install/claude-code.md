@@ -14,3 +14,11 @@ summary, and waits for your explicit confirmation before creating files.
 The selected IEEE template is downloaded from its configured source, so this
 step requires network access. The generated `paper/TEMPLATE.md` records the
 selected source for later review.
+
+## Write and review a paper
+
+After initialization, follow the [paper-writing guide](../paper-writing.md).
+For example, ask: `Write the experimental results from results/processed and
+results/tables.` The section writers edit the existing LaTeX target and explain
+their evidence; `reviewing-research-paper` produces a report only until you
+explicitly request changes.
