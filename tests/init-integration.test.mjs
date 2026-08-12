@@ -14,11 +14,11 @@ async function exists(file) {
 function hasCompleteFullEvidence(row) {
   const [, status, version, date, command, result, evidence] = row;
   const placeholder = /^(Not recorded|Not yet recorded|—)$/i;
-  return /^Full\b/i.test(status)
+  return status === 'Full'
     && [version, date, command, evidence].every((value) => (
       typeof value === 'string' && value.trim() && !placeholder.test(value)
     ))
-    && /^(PASS|Passed)$/i.test(result);
+    && /^(PASS|Passed)$/.test(result);
 }
 
 test('verify contract includes the init skill and CLI entry point', async () => {
@@ -73,7 +73,7 @@ test('compatibility rows require native smoke evidence before reporting Full sup
   for (const row of rows) {
     const [, status, version, date, command, result, evidence] = row;
     assert.equal(row.length, header.length);
-    if (/^Full\b/i.test(status)) {
+    if (status === 'Full') {
       assert.equal(hasCompleteFullEvidence(row), true);
     } else {
       assert.equal(status, 'Unverified (pending recorded smoke test)');
@@ -100,7 +100,10 @@ for (const [description, index, value] of [
   ['an unrecorded tested date', 3, 'Not recorded'],
   ['an unrecorded native command', 4, 'Not recorded'],
   ['a failed native result', 5, 'Failed'],
+  ['a lowercase pass result', 5, 'pass'],
+  ['a lowercase passed result', 5, 'passed'],
   ['an unrecorded evidence location', 6, 'Not recorded'],
+  ['a suffixed Full status', 1, 'Full (pending)'],
 ]) {
   test(`Full compatibility rows reject ${description}`, () => {
     const row = [...COMPLETE_FULL_ROW];

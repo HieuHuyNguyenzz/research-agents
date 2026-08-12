@@ -10,10 +10,10 @@ automated tests. It does not validate native harness installation, discovery,
 or clean-session smoke behavior; that evidence remains required for every
 platform below.
 
-A status of `Full` requires a non-placeholder tested version and date, native
-clean-session command, `PASS` or `Passed` result, and transcript or other
-evidence location. Until those fields are recorded, the status must remain
-`Unverified (pending recorded smoke test)`.
+A status exactly equal to `Full` requires a non-placeholder tested version and
+date, native clean-session command, `PASS` or `Passed` result, and transcript
+or other evidence location. Until those fields are recorded, the status must
+remain `Unverified (pending recorded smoke test)`.
 
 | Harness | Status | Tested version | Tested date | Native clean-session command | Result | Evidence location | Bootstrap mechanism | Fallback |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
