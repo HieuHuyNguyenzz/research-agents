@@ -1,0 +1,41 @@
+---
+name: writing-paper-introduction
+description: Use when drafting or revising a research-paper introduction from the available repository and manuscript evidence.
+---
+
+# Writing Paper Introduction
+
+Write or revise `paper/sections/introduction.tex` to frame the work accurately.
+
+## Inspect before editing
+
+Inspect the whole repository and the existing target first: project instructions,
+`README.md`, `docs/`, code, configs, tests, results, `paper/`, and
+`paper/references.bib`. Establish the manuscript's terminology and venue style.
+
+## Shared edit contract
+
+- Write directly to `paper/sections/introduction.tex`; create it if absent.
+- Preserve unrelated content and surrounding conventions. Update an existing
+  introduction instead of appending a duplicate.
+- Separate observed evidence from interpretation. Mark missing evidence,
+  assumptions, and unresolved citations for follow-up; do not invent facts.
+- Use existing citation keys only; do not fabricate a citation or source.
+- Keep LaTeX valid, including escaping special characters and preserving the
+  target's fragment structure.
+- Report changed files, claims and evidence used, assumptions, unresolved
+  citations, and validation performed and its result.
+
+## Section content
+
+Establish the problem's importance and the evidence-supported gap, then state
+the approach at an appropriate level. Give traceable contributions: each must
+map to code, evidence, or an explicitly supplied project claim. End with an
+organization preview. Do not claim novelty, superiority, significance, or
+causality without support.
+
+## Validate
+
+Confirm the target exists, contains the introduction once, and presents no
+missing evidence as fact. Run an available LaTeX or manuscript validation
+command; if none is available, report that compilation could not be run.
