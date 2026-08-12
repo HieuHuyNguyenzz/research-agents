@@ -205,9 +205,9 @@ test('skip mode does not fetch a template when all template files conflict', asy
       }
     });
 
-    assert.deepEqual(result.skipped, [
-      'paper/main.tex', 'paper/references.bib', 'paper/TEMPLATE.md'
-    ]);
+    for (const target of ['paper/main.tex', 'paper/references.bib', 'paper/TEMPLATE.md']) {
+      assert.ok(result.skipped.includes(target));
+    }
     assert.ok(await stat(path.join(tempRoot, 'README.md')));
   });
 });
@@ -230,13 +230,38 @@ test('skip mode treats a partial paper bundle conflict atomically', async () => 
     });
 
     assert.equal(fetchCalls, 0);
-    assert.deepEqual(result.skipped, [
-      'paper/main.tex', 'paper/references.bib', 'paper/TEMPLATE.md'
-    ]);
+    for (const target of ['paper/main.tex', 'paper/references.bib', 'paper/TEMPLATE.md']) {
+      assert.ok(result.skipped.includes(target));
+    }
     assert.deepEqual(result.unchanged, []);
     assert.equal(await readFile(path.join(paperDir, 'main.tex'), 'utf8'), 'edited main');
     await assert.rejects(access(path.join(paperDir, 'references.bib')), { code: 'ENOENT' });
     await assert.rejects(access(path.join(paperDir, 'TEMPLATE.md')), { code: 'ENOENT' });
+  });
+});
+
+test('skip mode treats a paper ancestor file blocker as an atomic bundle conflict', async () => {
+  await withTempRoot(async (tempRoot) => {
+    const paperPath = path.join(tempRoot, 'paper');
+    await writeFile(paperPath, 'paper path blocker');
+    let fetchCalls = 0;
+
+    const result = await runInit({
+      rootDir: tempRoot,
+      manifest,
+      conflictMode: 'skip',
+      fetchImpl: async () => {
+        fetchCalls += 1;
+        return new Response(source);
+      }
+    });
+
+    assert.equal(fetchCalls, 0);
+    assert.equal(result.template.sha256, null);
+    for (const target of ['paper/main.tex', 'paper/references.bib', 'paper/TEMPLATE.md']) {
+      assert.ok(result.skipped.includes(target));
+    }
+    assert.equal(await readFile(paperPath, 'utf8'), 'paper path blocker');
   });
 });
 

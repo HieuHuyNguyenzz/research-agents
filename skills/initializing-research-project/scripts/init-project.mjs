@@ -87,6 +87,11 @@ function provenanceField(text, label) {
 }
 
 async function classifyTemplateTargets(rootDir, plan, manifest, definition) {
+  const blockedByAncestor = plan.conflicts.some((conflict) => (
+    [...TEMPLATE_FILES].some((target) => (
+      target !== conflict && target.startsWith(`${conflict}/`)
+    ))
+  ));
   const existing = new Map();
   for (const relativePath of TEMPLATE_FILES) {
     if (plan.conflicts.includes(relativePath)) {
@@ -127,13 +132,18 @@ async function classifyTemplateTargets(rootDir, plan, manifest, definition) {
     }
   }
 
+  if (blockedByAncestor) {
+    return { unchanged: [], conflicts: [...existing.keys()], blocked: true, sha256: undefined };
+  }
+
   return exactGeneratedSet
     ? {
       unchanged: [...TEMPLATE_FILES],
       conflicts: [],
+      blocked: false,
       sha256: provenanceField(provenanceText, 'SHA-256')
     }
-    : { unchanged: [], conflicts: [...existing.keys()], sha256: undefined };
+    : { unchanged: [], conflicts: [...existing.keys()], blocked: false, sha256: undefined };
 }
 
 function parentDirectories(rootDir, relativePaths) {
@@ -397,7 +407,7 @@ export async function runInit({
     const templateState = await classifyTemplateTargets(root, plan, manifest, definition);
     for (const relativePath of templateState.unchanged) unchanged.add(relativePath);
     for (const relativePath of templateState.conflicts) knownConflicts.add(relativePath);
-    const partialTemplateConflict = templateState.conflicts.length > 0;
+    const partialTemplateConflict = templateState.blocked || templateState.conflicts.length > 0;
     if (mode === 'skip' && partialTemplateConflict) {
       for (const relativePath of TEMPLATE_FILES) knownConflicts.add(relativePath);
     }
