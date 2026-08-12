@@ -12,6 +12,6 @@ platform below.
 
 | Harness | Compatibility | Tested version | Bootstrap mechanism | Last verification date | Fallback |
 | --- | --- | --- | --- | --- | --- |
-| Codex | Full (pending recorded smoke test) | Not yet recorded | Native skill discovery | Not yet recorded | [Codex mapping](../references/tool-mapping/codex.md) |
-| Claude Code | Full (pending recorded smoke test) | Not yet recorded | `SessionStart` hook | Not yet recorded | [Claude Code mapping](../references/tool-mapping/claude-code.md) |
-| OpenCode | Full (pending recorded smoke test) | Not yet recorded | Runtime plugin message transform | Not yet recorded | [OpenCode mapping](../references/tool-mapping/opencode.md) |
+| Codex | Unverified (pending recorded smoke test) | Not yet recorded | Native skill discovery | Not yet recorded | [Codex mapping](../references/tool-mapping/codex.md) |
+| Claude Code | Unverified (pending recorded smoke test) | Not yet recorded | `SessionStart` hook | Not yet recorded | [Claude Code mapping](../references/tool-mapping/claude-code.md) |
+| OpenCode | Unverified (pending recorded smoke test) | Not yet recorded | Runtime plugin message transform | Not yet recorded | [OpenCode mapping](../references/tool-mapping/opencode.md) |

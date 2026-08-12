@@ -18,8 +18,9 @@ test('verify contract includes the init skill and CLI entry point', async () => 
   assert.equal(await exists('scripts/init-project.mjs'), true);
 });
 
-test('the generated scaffold has no global-agent configuration instructions', async () => {
+test('initializer skill invokes the portable CLI without global-agent configuration instructions', async () => {
   const skill = await fs.readFile('skills/initializing-research-project/SKILL.md', 'utf8');
+  assert.match(skill, /node scripts\/init-project\.mjs --root <target-directory> --manifest <manifest\.json> --conflicts abort/);
   assert.doesNotMatch(skill, /global.*(AGENTS|CLAUDE|opencode)/i);
 });
 
@@ -42,4 +43,17 @@ test('compatibility documentation contains Node portability within the unverifie
   const text = await fs.readFile('docs/compatibility.md', 'utf8');
   assert.match(text, /Node\.js 20/i);
   assert.match(text, /does not validate[\s\S]*native[\s\S]*smoke/i);
+});
+
+test('compatibility rows remain explicitly unverified until native smoke evidence is recorded', async () => {
+  const text = await fs.readFile('docs/compatibility.md', 'utf8');
+  const rows = text.split('\n').filter((row) => /^\| (Codex|Claude Code|OpenCode) \|/.test(row));
+
+  assert.equal(rows.length, 3);
+  for (const row of rows) {
+    if (row.includes('| Not yet recorded |')) {
+      assert.doesNotMatch(row, /\|\s*Full\b/i);
+      assert.match(row, /\|\s*(Unverified|Pending)\b/i);
+    }
+  }
 });
