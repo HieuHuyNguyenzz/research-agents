@@ -1,4 +1,4 @@
-import { lstat, mkdir, open, readFile, rename, rm, writeFile } from 'node:fs/promises';
+import { lstat, mkdir, open, readFile, realpath, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -60,6 +60,10 @@ function parentDirectories(rootDir, relativePaths) {
   ));
 }
 
+function isWithinRoot(rootPath, candidatePath) {
+  return candidatePath === rootPath || candidatePath.startsWith(`${rootPath}${path.sep}`);
+}
+
 async function assertNotSymlink(targetPath) {
   try {
     const status = await lstat(targetPath);
@@ -83,6 +87,27 @@ async function assertRootAncestorsNotSymlinks(rootDir) {
       throw new Error(`Root path is not a directory: ${current}`);
     }
   }
+}
+
+async function assertSafeOperationPath(rootCanonical, targetPath) {
+  await assertRootAncestorsNotSymlinks(path.dirname(targetPath));
+
+  const isRoot = path.resolve(targetPath) === path.resolve(rootCanonical);
+  if (!isRoot) {
+    const parentCanonical = await realpath(path.dirname(targetPath));
+    if (!isWithinRoot(rootCanonical, parentCanonical)) {
+      throw new Error(`Path escapes project root: ${targetPath}`);
+    }
+  }
+
+  const status = await assertNotSymlink(targetPath);
+  if (status) {
+    const targetCanonical = await realpath(targetPath);
+    if (!isWithinRoot(rootCanonical, targetCanonical)) {
+      throw new Error(`Path escapes project root: ${targetPath}`);
+    }
+  }
+  return status;
 }
 
 async function ensureRootDirectory(rootDir, createdDirectories) {
@@ -115,14 +140,14 @@ async function ensureRootDirectory(rootDir, createdDirectories) {
   }
 }
 
-async function ensureDirectory(directory, createdDirectories) {
-  const status = await assertNotSymlink(directory);
+async function ensureDirectory(rootCanonical, directory, createdDirectories) {
+  const status = await assertSafeOperationPath(rootCanonical, directory);
   if (status) {
     if (!status.isDirectory()) throw new Error(`Directory path is not a directory: ${directory}`);
     return;
   }
   await mkdir(directory);
-  const createdStatus = await assertNotSymlink(directory);
+  const createdStatus = await assertSafeOperationPath(rootCanonical, directory);
   if (!createdStatus?.isDirectory()) throw new Error(`Directory path is not a directory: ${directory}`);
   createdDirectories.push(directory);
 }
@@ -136,7 +161,8 @@ async function rollback(createdFiles, createdDirectories) {
   void createdDirectories;
 }
 
-async function createFile(targetPath, content, writeFileImpl) {
+async function createFile(rootCanonical, targetPath, content, writeFileImpl) {
+  await assertSafeOperationPath(rootCanonical, targetPath);
   if (writeFileImpl !== writeFile) {
     await writeFileImpl(targetPath, content, { encoding: 'utf8', flag: 'wx' });
     await assertNotSymlink(targetPath);
@@ -153,7 +179,8 @@ async function createFile(targetPath, content, writeFileImpl) {
   }
 }
 
-async function overwriteFile(targetPath, content, writeFileImpl) {
+async function overwriteFile(rootCanonical, targetPath, content, writeFileImpl, renameImpl) {
+  await assertSafeOperationPath(rootCanonical, targetPath);
   if (writeFileImpl !== writeFile) {
     await writeFileImpl(targetPath, content, 'utf8');
     return;
@@ -163,6 +190,7 @@ async function overwriteFile(targetPath, content, writeFileImpl) {
     path.dirname(targetPath),
     `.${path.basename(targetPath)}.init-${process.pid}-${Date.now()}`
   );
+  await assertSafeOperationPath(rootCanonical, temporaryPath);
   const handle = await open(temporaryPath, 'wx');
   try {
     await handle.writeFile(content, 'utf8');
@@ -170,10 +198,15 @@ async function overwriteFile(targetPath, content, writeFileImpl) {
     await handle.close();
   }
   try {
-    await rename(temporaryPath, targetPath);
+    await assertSafeOperationPath(rootCanonical, temporaryPath);
+    await assertSafeOperationPath(rootCanonical, targetPath);
+    await renameImpl(temporaryPath, targetPath);
   } catch (error) {
-    await rm(temporaryPath, { force: true }).catch(() => {});
-    throw error;
+    const retained = new Error(`${error.message}; retained temporary file: ${temporaryPath}`, {
+      cause: error
+    });
+    retained.temporaryPath = temporaryPath;
+    throw retained;
   }
 }
 
@@ -183,7 +216,7 @@ async function overwriteFile(targetPath, content, writeFileImpl) {
  */
 export async function runInit({
   rootDir, manifest: manifestInput, conflictMode, confirmOverwrite = false, fetchImpl,
-  writeFileImpl = writeFile
+  writeFileImpl = writeFile, renameImpl = rename
 } = {}) {
   if (typeof rootDir !== 'string' || !rootDir) {
     throw new TypeError('rootDir must be a non-empty string');
@@ -198,6 +231,7 @@ export async function runInit({
 
   try {
     await ensureRootDirectory(root, createdDirectories);
+    const rootCanonical = await realpath(root);
     const plan = await planWrites(root, manifest);
     const selection = selectWriteTargets(plan, mode);
 
@@ -213,17 +247,17 @@ export async function runInit({
     const conflicts = new Set(selection.conflicts);
 
     for (const directory of parentDirectories(root, selection.files)) {
-      await ensureDirectory(directory, createdDirectories);
+      await ensureDirectory(rootCanonical, directory, createdDirectories);
     }
 
     for (const relativePath of selection.files) {
       const targetPath = path.join(root, ...relativePath.split('/'));
       const content = writeContent(relativePath, manifest, definition, material);
-      await assertNotSymlink(targetPath);
+      await assertSafeOperationPath(rootCanonical, targetPath);
       if (conflicts.has(relativePath)) {
-        await overwriteFile(targetPath, content, writeFileImpl);
+        await overwriteFile(rootCanonical, targetPath, content, writeFileImpl, renameImpl);
       } else {
-        await createFile(targetPath, content, writeFileImpl);
+        await createFile(rootCanonical, targetPath, content, writeFileImpl);
         createdFiles.push({ path: relativePath });
       }
     }

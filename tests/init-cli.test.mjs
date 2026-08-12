@@ -225,6 +225,61 @@ test('rejects symlinked roots and target paths before fetching or writing outsid
   });
 });
 
+test('rejects a root swapped to an outside symlink during template fetch', async () => {
+  await withTempRoot(async (tempRoot) => {
+    const root = path.join(tempRoot, 'project');
+    const originalRoot = path.join(tempRoot, 'project-original');
+    const outside = await temporaryDirectory('research-init-outside-');
+    try {
+      await mkdir(root);
+      await assert.rejects(
+        runInit({
+          rootDir: root,
+          manifest,
+          fetchImpl: async () => {
+            await rename(root, originalRoot);
+            await symlink(outside, root);
+            return new Response(source);
+          }
+        }),
+        /symlink|escapes project root/i
+      );
+      await assert.rejects(stat(path.join(outside, 'README.md')), { code: 'ENOENT' });
+    } finally {
+      await unlink(root).catch(() => {});
+      await rename(originalRoot, root).catch(() => {});
+      await rm(outside, { recursive: true, force: true });
+    }
+  });
+});
+
+test('retains a replaced overwrite temporary file after a failed rename', async () => {
+  await withTempRoot(async (tempRoot) => {
+    await writeFile(path.join(tempRoot, 'README.md'), 'keep');
+    let retainedError;
+    await assert.rejects(
+      runInit({
+        rootDir: tempRoot,
+        manifest,
+        conflictMode: 'overwrite',
+        confirmOverwrite: true,
+        fetchImpl: fakeFetch,
+        renameImpl: async (temporaryPath) => {
+          await rename(temporaryPath, `${temporaryPath}.original`);
+          await writeFile(temporaryPath, 'external replacement');
+          throw new Error('injected rename failure');
+        }
+      }),
+      (error) => {
+        retainedError = error;
+        return /retained temporary file/.test(error.message);
+      }
+    );
+
+    assert.equal(await readFile(retainedError.temporaryPath, 'utf8'), 'external replacement');
+  });
+});
+
 test('leaves invocation-created paths on failure rather than risking deletion of a raced replacement', async () => {
   await withTempRoot(async (tempRoot) => {
     await assert.rejects(
