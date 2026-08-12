@@ -60,6 +60,32 @@ export const TARGET_DIRECTORIES = Object.freeze([
   ...new Set(TARGET_PATHS.flatMap(parentDirectories))
 ].sort());
 
+/** Returns whether a target file is blocked by a direct or ancestor conflict. */
+export function isPathConflicted(relativePath, conflicts) {
+  return conflicts.some((conflict) => (
+    relativePath === conflict || relativePath.startsWith(`${conflict}/`)
+  ));
+}
+
+/** Applies a validated conflict mode without changing the filesystem. */
+export function selectWriteTargets(plan, conflictMode) {
+  if (!plan || !Array.isArray(plan.files) || !Array.isArray(plan.conflicts)) {
+    throw new TypeError('plan must contain files and conflicts arrays');
+  }
+
+  const conflicts = [...new Set(plan.conflicts)].sort();
+  if (conflictMode === 'skip') {
+    const skipped = plan.files.filter((relativePath) => isPathConflicted(relativePath, conflicts));
+    return {
+      files: plan.files.filter((relativePath) => !isPathConflicted(relativePath, conflicts)),
+      skipped,
+      conflicts
+    };
+  }
+
+  return { files: [...plan.files], skipped: [], conflicts };
+}
+
 async function pathKind(targetPath) {
   try {
     const status = await lstat(targetPath);
@@ -108,6 +134,6 @@ export async function planWrites(rootDir, manifest) {
   return {
     files: [...TARGET_PATHS],
     directories: [...TARGET_DIRECTORIES],
-    conflicts
+    conflicts: conflicts.sort()
   };
 }
