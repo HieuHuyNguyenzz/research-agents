@@ -1,4 +1,4 @@
-import { lstat, mkdir, readFile, rmdir, rm, writeFile } from 'node:fs/promises';
+import { lstat, mkdir, open, readFile, rename, rmdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -60,23 +60,121 @@ function parentDirectories(rootDir, relativePaths) {
   ));
 }
 
-async function ensureDirectory(directory, createdDirectories) {
+function pathIdentity(status) {
+  const dev = Number(status.dev);
+  const ino = Number(status.ino);
+  return Number.isSafeInteger(dev) && Number.isSafeInteger(ino) && ino > 0
+    ? { dev, ino }
+    : undefined;
+}
+
+function hasSameIdentity(status, identity) {
+  const current = pathIdentity(status);
+  return Boolean(current && identity && current.dev === identity.dev && current.ino === identity.ino);
+}
+
+async function assertNotSymlink(targetPath) {
   try {
-    const status = await lstat(directory);
-    if (!status.isDirectory()) throw new Error(`Directory path is not a directory: ${directory}`);
+    const status = await lstat(targetPath);
+    if (status.isSymbolicLink()) throw new Error(`Refusing symlink path: ${targetPath}`);
+    return status;
   } catch (error) {
-    if (error?.code !== 'ENOENT') throw error;
-    await mkdir(directory);
-    createdDirectories.push(directory);
+    if (error?.code === 'ENOENT') return undefined;
+    throw error;
   }
 }
 
-async function rollback(createdFiles, createdDirectories, rootDir) {
-  for (const relativePath of [...createdFiles].reverse()) {
-    await rm(path.join(rootDir, ...relativePath.split('/')), { force: true }).catch(() => {});
+async function ensureRootDirectory(rootDir, createdDirectories) {
+  const rootStatus = await assertNotSymlink(rootDir);
+  if (rootStatus) {
+    if (!rootStatus.isDirectory()) throw new Error(`Root path is not a directory: ${rootDir}`);
+    return;
   }
-  for (const directory of [...createdDirectories].reverse()) {
-    await rmdir(directory).catch(() => {});
+
+  const missing = [];
+  let current = rootDir;
+  while (true) {
+    const status = await assertNotSymlink(current);
+    if (status) {
+      if (!status.isDirectory()) throw new Error(`Root path is not a directory: ${current}`);
+      break;
+    }
+    missing.push(current);
+    const parent = path.dirname(current);
+    if (parent === current) throw new Error(`Root path has no existing parent: ${rootDir}`);
+    current = parent;
+  }
+
+  for (const directory of missing.reverse()) {
+    await mkdir(directory);
+    const createdStatus = await assertNotSymlink(directory);
+    createdDirectories.push({ path: directory, identity: pathIdentity(createdStatus) });
+  }
+}
+
+async function ensureDirectory(directory, createdDirectories) {
+  const status = await assertNotSymlink(directory);
+  if (status) {
+    if (!status.isDirectory()) throw new Error(`Directory path is not a directory: ${directory}`);
+    return;
+  }
+  await mkdir(directory);
+  const createdStatus = await assertNotSymlink(directory);
+  createdDirectories.push({ path: directory, identity: pathIdentity(createdStatus) });
+}
+
+async function rollback(createdFiles, createdDirectories, rootDir) {
+  for (const created of [...createdFiles].reverse()) {
+    const targetPath = path.join(rootDir, ...created.path.split('/'));
+    const status = await assertNotSymlink(targetPath).catch(() => undefined);
+    if (status && hasSameIdentity(status, created.identity)) {
+      await rm(targetPath, { force: true }).catch(() => {});
+    }
+  }
+  for (const created of [...createdDirectories].reverse()) {
+    const status = await assertNotSymlink(created.path).catch(() => undefined);
+    if (status?.isDirectory() && hasSameIdentity(status, created.identity)) {
+      await rmdir(created.path).catch(() => {});
+    }
+  }
+}
+
+async function createFile(targetPath, content, writeFileImpl) {
+  if (writeFileImpl !== writeFile) {
+    await writeFileImpl(targetPath, content, { encoding: 'utf8', flag: 'wx' });
+    return pathIdentity(await assertNotSymlink(targetPath));
+  }
+
+  const handle = await open(targetPath, 'wx');
+  try {
+    await handle.writeFile(content, 'utf8');
+    return pathIdentity(await handle.stat());
+  } finally {
+    await handle.close();
+  }
+}
+
+async function overwriteFile(targetPath, content, writeFileImpl) {
+  if (writeFileImpl !== writeFile) {
+    await writeFileImpl(targetPath, content, 'utf8');
+    return;
+  }
+
+  const temporaryPath = path.join(
+    path.dirname(targetPath),
+    `.${path.basename(targetPath)}.init-${process.pid}-${Date.now()}`
+  );
+  const handle = await open(temporaryPath, 'wx');
+  try {
+    await handle.writeFile(content, 'utf8');
+  } finally {
+    await handle.close();
+  }
+  try {
+    await rename(temporaryPath, targetPath);
+  } catch (error) {
+    await rm(temporaryPath, { force: true }).catch(() => {});
+    throw error;
   }
 }
 
@@ -85,7 +183,8 @@ async function rollback(createdFiles, createdDirectories, rootDir) {
  * conflicts are resolved before any download or filesystem mutation begins.
  */
 export async function runInit({
-  rootDir, manifest: manifestInput, conflictMode, confirmOverwrite = false, fetchImpl
+  rootDir, manifest: manifestInput, conflictMode, confirmOverwrite = false, fetchImpl,
+  writeFileImpl = writeFile
 } = {}) {
   if (typeof rootDir !== 'string' || !rootDir) {
     throw new TypeError('rootDir must be a non-empty string');
@@ -95,23 +194,25 @@ export async function runInit({
   const mode = validateConflictMode(conflictMode);
   const definition = getTemplateDefinition(manifest.paperTemplate);
   const root = path.resolve(rootDir);
-  const plan = await planWrites(root, manifest);
-  const selection = selectWriteTargets(plan, mode);
-
-  if (mode === 'abort' && selection.conflicts.length > 0) {
-    throw new Error(`Initialization conflicts: ${selection.conflicts.join(', ')}`);
-  }
-  if (mode === 'overwrite' && selection.conflicts.length > 0 && confirmOverwrite !== true) {
-    throw new Error('Overwrite mode requires explicit confirmation');
-  }
-
-  const needsTemplate = selection.files.some((relativePath) => TEMPLATE_FILES.has(relativePath));
-  const material = needsTemplate ? await fetchTemplate(definition, { fetchImpl }) : undefined;
   const createdFiles = [];
   const createdDirectories = [];
-  const conflicts = new Set(selection.conflicts);
 
   try {
+    await ensureRootDirectory(root, createdDirectories);
+    const plan = await planWrites(root, manifest);
+    const selection = selectWriteTargets(plan, mode);
+
+    if (mode === 'abort' && selection.conflicts.length > 0) {
+      throw new Error(`Initialization conflicts: ${selection.conflicts.join(', ')}`);
+    }
+    if (mode === 'overwrite' && selection.conflicts.length > 0 && confirmOverwrite !== true) {
+      throw new Error('Overwrite mode requires explicit confirmation');
+    }
+
+    const needsTemplate = selection.files.some((relativePath) => TEMPLATE_FILES.has(relativePath));
+    const material = needsTemplate ? await fetchTemplate(definition, { fetchImpl }) : undefined;
+    const conflicts = new Set(selection.conflicts);
+
     for (const directory of parentDirectories(root, selection.files)) {
       await ensureDirectory(directory, createdDirectories);
     }
@@ -119,29 +220,32 @@ export async function runInit({
     for (const relativePath of selection.files) {
       const targetPath = path.join(root, ...relativePath.split('/'));
       const content = writeContent(relativePath, manifest, definition, material);
+      await assertNotSymlink(targetPath);
       if (conflicts.has(relativePath)) {
-        await writeFile(targetPath, content, 'utf8');
+        await overwriteFile(targetPath, content, writeFileImpl);
       } else {
-        await writeFile(targetPath, content, { encoding: 'utf8', flag: 'wx' });
-        createdFiles.push(relativePath);
+        createdFiles.push({
+          path: relativePath,
+          identity: await createFile(targetPath, content, writeFileImpl)
+        });
       }
     }
+
+    return {
+      created: selection.files,
+      skipped: selection.skipped,
+      conflicts: selection.conflicts,
+      template: {
+        id: definition.id,
+        sourceUrl: definition.sourceUrl,
+        sha256: material?.sha256 ?? null
+      }
+    };
   } catch (error) {
     await rollback(createdFiles, createdDirectories, root);
-    error.created = [...createdFiles];
+    error.created = createdFiles.map((created) => created.path);
     throw error;
   }
-
-  return {
-    created: selection.files,
-    skipped: selection.skipped,
-    conflicts: selection.conflicts,
-    template: {
-      id: definition.id,
-      sourceUrl: definition.sourceUrl,
-      sha256: material?.sha256 ?? null
-    }
-  };
 }
 
 function usage() {

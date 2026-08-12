@@ -89,6 +89,9 @@ export function selectWriteTargets(plan, conflictMode) {
 async function pathKind(targetPath) {
   try {
     const status = await lstat(targetPath);
+    if (status.isSymbolicLink()) {
+      throw new Error(`Refusing symlink path: ${targetPath}`);
+    }
     return status.isDirectory() ? 'directory' : 'file';
   } catch (error) {
     if (error?.code === 'ENOENT') return undefined;

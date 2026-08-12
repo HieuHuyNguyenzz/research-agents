@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFile as execFileCallback } from 'node:child_process';
-import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rename, rm, stat, symlink, unlink, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { promisify } from 'node:util';
@@ -153,6 +153,60 @@ test('overwrite mode requires an explicit confirmation before replacing conflict
   });
 });
 
+test('rejects symlinked roots and target paths before fetching or writing outside root', async () => {
+  await withTempRoot(async (tempRoot) => {
+    const outside = await mkdtemp(path.join(os.tmpdir(), 'research-init-outside-'));
+    const rootLink = `${tempRoot}-link`;
+    const outsideReadme = path.join(outside, 'README.md');
+    try {
+      await writeFile(outsideReadme, 'outside data');
+      await symlink(outsideReadme, path.join(tempRoot, 'README.md'));
+      await assert.rejects(
+        runInit({
+          rootDir: tempRoot,
+          manifest,
+          conflictMode: 'overwrite',
+          confirmOverwrite: true,
+          fetchImpl: async () => {
+            throw new Error('template fetch must not run');
+          }
+        }),
+        /symlink/i
+      );
+      assert.equal(await readFile(outsideReadme, 'utf8'), 'outside data');
+
+      await unlink(path.join(tempRoot, 'README.md'));
+      await symlink(outside, path.join(tempRoot, 'docs'));
+      await assert.rejects(
+        runInit({
+          rootDir: tempRoot,
+          manifest,
+          fetchImpl: async () => {
+            throw new Error('template fetch must not run');
+          }
+        }),
+        /symlink/i
+      );
+
+      await symlink(tempRoot, rootLink);
+      await assert.rejects(
+        runInit({
+          rootDir: rootLink,
+          manifest,
+          fetchImpl: async () => {
+            throw new Error('template fetch must not run');
+          }
+        }),
+        /symlink/i
+      );
+    } finally {
+      await unlink(path.join(tempRoot, 'docs')).catch(() => {});
+      await unlink(rootLink).catch(() => {});
+      await rm(outside, { recursive: true, force: true });
+    }
+  });
+});
+
 test('rolls back only this invocation\'s new paths when a later write fails', async () => {
   await withTempRoot(async (tempRoot) => {
     await assert.rejects(
@@ -170,6 +224,49 @@ test('rolls back only this invocation\'s new paths when a later write fails', as
 
     await assert.rejects(stat(path.join(tempRoot, 'README.md')), { code: 'ENOENT' });
     assert.equal(await readFile(path.join(tempRoot, 'docs/architecture.md'), 'utf8'), 'external conflict');
+  });
+});
+
+test('rollback preserves a concurrently replaced invocation-created path', async () => {
+  await withTempRoot(async (tempRoot) => {
+    const readme = path.join(tempRoot, 'README.md');
+    await assert.rejects(
+      runInit({
+        rootDir: tempRoot,
+        manifest,
+        fetchImpl: fakeFetch,
+        writeFileImpl: async (targetPath, content, options) => {
+          if (targetPath.endsWith('AGENTS.md')) {
+            await rename(readme, path.join(tempRoot, 'original-readme.md'));
+            await writeFile(readme, 'external replacement');
+            throw new Error('injected later write failure');
+          }
+          await writeFile(targetPath, content, options);
+        }
+      }),
+      /injected later write failure/
+    );
+    assert.equal(await readFile(readme, 'utf8'), 'external replacement');
+  });
+});
+
+test('creates a nested missing root before fetching the template', async () => {
+  await withTempRoot(async (tempRoot) => {
+    const nestedRoot = path.join(tempRoot, 'one', 'two', 'project');
+    let rootExistsAtFetch = false;
+
+    await runInit({
+      rootDir: nestedRoot,
+      manifest,
+      fetchImpl: async () => {
+        rootExistsAtFetch = true;
+        assert.ok(await stat(nestedRoot));
+        return new Response(source);
+      }
+    });
+
+    assert.equal(rootExistsAtFetch, true);
+    assert.ok(await stat(path.join(nestedRoot, 'README.md')));
   });
 });
 
