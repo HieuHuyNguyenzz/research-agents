@@ -40,8 +40,12 @@ const REVIEW_PHRASES = [
     'does not modify'
 ];
 
-const DISALLOWED_TOOL_NAMES = [
-  'apply_patch', 'bash', 'glob', 'grep', 'todowrite', 'webfetch', 'Bash', 'Read', 'Task'
+const DISALLOWED_TOOL_REFERENCES = [
+  /\bapply_patch\b/i,
+  /\b(?:bash|glob|grep|todowrite|webfetch)\s+tool\b/i,
+  /\b(?:use|run|invoke|call)\s+(?:the\s+)?`?(?:Bash|Read|Task)`?\b/i,
+  /\b(?:Bash|Read|Task)\s+tool\b/,
+  /`(?:Bash|Read|Task)`/
 ];
 
 function assertReviewWorkflowContract(text) {
@@ -67,7 +71,9 @@ function assertPaperWritingSkillContract(name, text, phrases, target) {
   assert.match(text, /direct|write/i);
   assert.match(text, /preserv|existing/i);
   assert.match(text, /missing|do not invent|must not/i);
-  assert.doesNotMatch(text, new RegExp(`\\b(${DISALLOWED_TOOL_NAMES.join('|')})\\b`, 'i'));
+  for (const reference of DISALLOWED_TOOL_REFERENCES) {
+    assert.doesNotMatch(text, reference);
+  }
   if (name === REVIEW_SKILL) {
     assertReviewWorkflowContract(text);
     assert.match(text, /do not modify files/i);
@@ -134,6 +140,30 @@ test('paper-writing contract rejects plain disallowed tool names', () => {
   ));
 });
 
+test('paper-writing contract allows ordinary prose that overlaps tool names', () => {
+  const text = validAbstractSkill(
+    'Write directly to `paper/sections/abstract.tex` with abstract evidence and citation. Read the existing section and complete the task without inventing missing facts.'
+  );
+  assert.doesNotThrow(() => assertPaperWritingSkillContract(
+    'writing-paper-abstract', text, PAPER_WRITERS['writing-paper-abstract'].phrases,
+    PAPER_WRITERS['writing-paper-abstract'].target
+  ));
+});
+
+test('paper-writing contract rejects clearly named platform tools', () => {
+  for (const body of [
+    'Use Bash to write directly to `paper/sections/abstract.tex` with abstract evidence and citation. Preserve existing text when information is missing.',
+    'Use Read to write directly to `paper/sections/abstract.tex` with abstract evidence and citation. Preserve existing text when information is missing.',
+    'Use the Task tool to write directly to `paper/sections/abstract.tex` with abstract evidence and citation. Preserve existing text when information is missing.'
+  ]) {
+    const text = validAbstractSkill(body);
+    assert.throws(() => assertPaperWritingSkillContract(
+      'writing-paper-abstract', text, PAPER_WRITERS['writing-paper-abstract'].phrases,
+      PAPER_WRITERS['writing-paper-abstract'].target
+    ));
+  }
+});
+
 test('valid review fixture satisfies the complete review contract', () => {
   assert.doesNotThrow(() => assertPaperWritingSkillContract(
     REVIEW_SKILL, validReviewSkill(''), REVIEW_PHRASES
@@ -185,15 +215,43 @@ test('review contract rejects platform-tool references', () => {
   ));
 });
 
-test('paper-writing skills are discoverable in the library and README', async () => {
-  const index = await fs.readFile('skills/listing-research-skills/SKILL.md', 'utf8');
-  const readme = await fs.readFile('README.md', 'utf8');
+function assertPaperWritingDiscovery(index, readme) {
   for (const name of [...Object.keys(PAPER_WRITERS), REVIEW_SKILL]) {
     assert.match(index, new RegExp(name));
     assert.match(readme, new RegExp(name));
   }
   assert.match(index, /writing skills edit their section directly/i);
   assert.match(index, /review only reports findings/i);
-  assert.match(readme, /reading-research-paper[\s\S]*writing-paper-abstract[\s\S]*analyzing-experiment-results[\s\S]*reviewing-research-paper/i);
+  assert.match(readme, /reading-research-paper[\s\S]*writing-paper-abstract[\s\S]*writing-paper-introduction[\s\S]*writing-paper-related-work[\s\S]*writing-paper-methodology[\s\S]*writing-paper-experimental-results[\s\S]*writing-paper-conclusion[\s\S]*analyzing-experiment-results[\s\S]*reviewing-research-paper/i);
   assert.match(readme, /Write the methodology section from the current code and configs\./);
+}
+
+test('paper-writing skills are discoverable in the library and README', async () => {
+  const index = await fs.readFile('skills/listing-research-skills/SKILL.md', 'utf8');
+  const readme = await fs.readFile('README.md', 'utf8');
+  assertPaperWritingDiscovery(index, readme);
+});
+
+test('paper-writing discovery rejects a missing or reordered workflow writer', () => {
+  const index = 'writing skills edit their section directly. The review only reports findings.\n'
+    + [...Object.keys(PAPER_WRITERS), REVIEW_SKILL].join('\n');
+  const orderedWorkflow = [
+    'reading-research-paper',
+    'writing-paper-abstract',
+    'writing-paper-introduction',
+    'writing-paper-related-work',
+    'writing-paper-methodology',
+    'writing-paper-experimental-results',
+    'writing-paper-conclusion',
+    'analyzing-experiment-results',
+    'reviewing-research-paper'
+  ].join('\n');
+  const example = 'Write the methodology section from the current code and configs.';
+  assert.throws(() => assertPaperWritingDiscovery(index, orderedWorkflow.replace(
+    'writing-paper-methodology\nwriting-paper-experimental-results',
+    'writing-paper-experimental-results\nwriting-paper-methodology'
+  ) + example));
+  assert.throws(() => assertPaperWritingDiscovery(index, orderedWorkflow.replace(
+    'writing-paper-related-work\n', ''
+  ) + example));
 });
