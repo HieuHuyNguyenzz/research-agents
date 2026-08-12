@@ -22,6 +22,9 @@ structured, reproducible workspace.
   results, documentation, and paper artifacts.
 - Conflict detection, explicit overwrite confirmation, idempotent reruns, and
   cross-platform Node.js tooling.
+- A skills-first research workflow for reading papers, planning
+  reimplementations, analyzing experiment results, and creating reproducible
+  notebooks.
 
 ## Quick start
 
@@ -41,6 +44,20 @@ The initializer asks questions one at a time, shows the complete plan, and waits
 for explicit confirmation before writing anything. Template downloads require
 network access. Existing files are preserved unless you explicitly choose an
 overwrite mode.
+
+## Research workflow
+
+After initialization, the shared research skills support this sequence:
+
+1. `reading-research-paper` — build an evidence map from a paper.
+2. `planning-paper-reimplementation` — map the paper to code, data, and tests.
+3. `analyzing-experiment-results` — inspect metrics, runs, baselines, and
+   ablations under `results/`.
+4. `creating-research-notebook` — produce a rerunnable notebook under
+   `results/analysis/`.
+
+Ask the coding agent naturally, for example: `Analyze the experiment results in
+results/raw and prepare a paper-ready notebook.`
 
 ## Generated project layout
 
