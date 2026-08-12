@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { lstat, mkdir, open, readFile, realpath, rename, rmdir, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -5,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { parseManifest, validateManifest } from './lib/init/manifest.mjs';
 import { planWrites, selectWriteTargets } from './lib/init/paths.mjs';
 import { renderFile } from './lib/init/render.mjs';
-import { fetchTemplate } from './lib/init/templates-fetch.mjs';
+import { fetchTemplate, validateTemplateSource } from './lib/init/templates-fetch.mjs';
 import { getTemplateDefinition } from './lib/init/templates.mjs';
 
 const CONFLICT_MODES = new Set(['abort', 'overwrite', 'skip']);
@@ -17,8 +18,18 @@ const TEMPLATE_FILES = new Set([
 
 class CliArgumentError extends Error {}
 
-function templateProvenance(definition, material, retrievedAt = new Date().toISOString()) {
-  return `# Template provenance\n\n- Template ID: ${definition.id}\n- Source URL: ${definition.sourceUrl}\n- Retrieved at (UTC): ${retrievedAt}\n- SHA-256: ${material.sha256}\n- Expected class option: ${definition.expectedClassOption}\n\nReview the template guidance before submission.\n`;
+function sha256(value) {
+  return createHash('sha256').update(value).digest('hex');
+}
+
+function templateProvenance(
+  definition,
+  material,
+  mainText,
+  referencesText,
+  retrievedAt = new Date().toISOString()
+) {
+  return `# Template provenance\n\n- Template ID: ${definition.id}\n- Source URL: ${definition.sourceUrl}\n- Retrieved at (UTC): ${retrievedAt}\n- SHA-256: ${material.sha256}\n- Expected class option: ${definition.expectedClassOption}\n- main.tex SHA-256: ${sha256(mainText)}\n- references.bib SHA-256: ${sha256(referencesText)}\n\nReview the template guidance before submission.\n`;
 }
 
 function validateConflictMode(conflictMode) {
@@ -38,12 +49,9 @@ function validatedManifest(input) {
   return manifest;
 }
 
-function writeContent(relativePath, manifest, definition, material, retrievedAt) {
+function writeContent(relativePath, manifest, material) {
   if (relativePath === 'paper/main.tex') return renderFile(relativePath, manifest, material);
   if (relativePath === 'paper/references.bib') return material.referencesBib ?? '';
-  if (relativePath === 'paper/TEMPLATE.md') {
-    return templateProvenance(definition, material, retrievedAt);
-  }
   return renderFile(relativePath, manifest, material);
 }
 
@@ -71,6 +79,61 @@ function retainedRetrievalTime(existingProvenance) {
   if (!match) return undefined;
   const timestamp = match[1].trim();
   return Number.isNaN(Date.parse(timestamp)) ? undefined : timestamp;
+}
+
+function provenanceField(text, label) {
+  const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return text?.match(new RegExp(`^- ${escapedLabel}: (.+)$`, 'm'))?.[1]?.trim();
+}
+
+async function classifyTemplateTargets(rootDir, plan, manifest, definition) {
+  const existing = new Map();
+  for (const relativePath of TEMPLATE_FILES) {
+    if (plan.conflicts.includes(relativePath)) {
+      existing.set(relativePath, await existingText(rootDir, relativePath));
+    }
+  }
+
+  const mainText = existing.get('paper/main.tex');
+  const referencesText = existing.get('paper/references.bib');
+  const provenanceText = existing.get('paper/TEMPLATE.md');
+  let exactGeneratedSet = typeof mainText === 'string'
+    && typeof referencesText === 'string'
+    && typeof provenanceText === 'string';
+
+  if (exactGeneratedSet) {
+    try {
+      validateTemplateSource(mainText, definition.expectedClassOption);
+      exactGeneratedSet = renderFile('paper/main.tex', manifest, { text: mainText }) === mainText
+        && provenanceField(provenanceText, 'Template ID') === definition.id
+        && provenanceField(provenanceText, 'Source URL') === definition.sourceUrl
+        && provenanceField(provenanceText, 'Expected class option') === definition.expectedClassOption
+        && provenanceField(provenanceText, 'main.tex SHA-256') === sha256(mainText)
+        && provenanceField(provenanceText, 'references.bib SHA-256') === sha256(referencesText);
+
+      if (exactGeneratedSet) {
+        const material = { sha256: provenanceField(provenanceText, 'SHA-256') };
+        exactGeneratedSet = /^[a-f0-9]{64}$/.test(material.sha256 ?? '')
+          && templateProvenance(
+            definition,
+            material,
+            mainText,
+            referencesText,
+            retainedRetrievalTime(provenanceText)
+          ) === provenanceText;
+      }
+    } catch {
+      exactGeneratedSet = false;
+    }
+  }
+
+  return exactGeneratedSet
+    ? {
+      unchanged: [...TEMPLATE_FILES],
+      conflicts: [],
+      sha256: provenanceField(provenanceText, 'SHA-256')
+    }
+    : { unchanged: [], conflicts: [...existing.keys()], sha256: undefined };
 }
 
 function parentDirectories(rootDir, relativePaths) {
@@ -216,51 +279,76 @@ async function rollback(rootDir, createdFiles, createdDirectories) {
   return [...new Set(retained)].sort();
 }
 
-async function createFile(rootCanonical, targetPath, content, writeFileImpl) {
+async function createdFileIdentity(targetPath) {
+  const status = await assertNotSymlink(targetPath);
+  return status?.isFile() ? identity(status) : undefined;
+}
+
+async function createFile(rootCanonical, targetPath, content, writeFileImpl, onCreated) {
   await assertSafeOperationPath(rootCanonical, targetPath);
   if (writeFileImpl !== writeFile) {
-    await writeFileImpl(targetPath, content, { encoding: 'utf8', flag: 'wx' });
-    const status = await assertNotSymlink(targetPath);
-    return identity(status);
+    try {
+      await writeFileImpl(targetPath, content, { encoding: 'utf8', flag: 'wx' });
+    } catch (error) {
+      const fileIdentity = await createdFileIdentity(targetPath);
+      if (fileIdentity) onCreated(fileIdentity);
+      throw error;
+    }
+    const fileIdentity = await createdFileIdentity(targetPath);
+    if (!fileIdentity) throw new Error(`Created path is not a regular file: ${targetPath}`);
+    onCreated(fileIdentity);
+    return;
   }
 
   const handle = await open(targetPath, 'wx');
+  onCreated(identity(await handle.stat()));
   try {
     await handle.writeFile(content, 'utf8');
-    return identity(await handle.stat());
   } finally {
     await handle.close();
   }
 }
 
+function retainedTemporaryError(error, temporaryPath) {
+  const retained = new Error(`${error.message}; retained temporary file: ${temporaryPath}`, {
+    cause: error
+  });
+  retained.temporaryPath = temporaryPath;
+  return retained;
+}
+
 async function overwriteFile(rootCanonical, targetPath, content, writeFileImpl, renameImpl) {
   await assertSafeOperationPath(rootCanonical, targetPath);
-  if (writeFileImpl !== writeFile) {
-    await writeFileImpl(targetPath, content, 'utf8');
-    return;
-  }
-
   const temporaryPath = path.join(
     path.dirname(targetPath),
     `.${path.basename(targetPath)}.init-${process.pid}-${Date.now()}`
   );
   await assertSafeOperationPath(rootCanonical, temporaryPath);
-  const handle = await open(temporaryPath, 'wx');
+
   try {
-    await handle.writeFile(content, 'utf8');
-  } finally {
-    await handle.close();
+    if (writeFileImpl !== writeFile) {
+      await writeFileImpl(temporaryPath, content, { encoding: 'utf8', flag: 'wx' });
+    } else {
+      const handle = await open(temporaryPath, 'wx');
+      try {
+        await handle.writeFile(content, 'utf8');
+      } finally {
+        await handle.close();
+      }
+    }
+  } catch (error) {
+    if (await createdFileIdentity(temporaryPath)) {
+      throw retainedTemporaryError(error, temporaryPath);
+    }
+    throw error;
   }
+
   try {
     await assertSafeOperationPath(rootCanonical, temporaryPath);
     await assertSafeOperationPath(rootCanonical, targetPath);
     await renameImpl(temporaryPath, targetPath);
   } catch (error) {
-    const retained = new Error(`${error.message}; retained temporary file: ${temporaryPath}`, {
-      cause: error
-    });
-    retained.temporaryPath = temporaryPath;
-    throw retained;
+    throw retainedTemporaryError(error, temporaryPath);
   }
 }
 
@@ -293,7 +381,7 @@ export async function runInit({
     const knownConflicts = new Set(plan.conflicts.filter((relativePath) => !plan.files.includes(relativePath)));
 
     for (const relativePath of plan.files.filter((target) => !TEMPLATE_FILES.has(target))) {
-      const content = writeContent(relativePath, manifest, definition, undefined);
+      const content = writeContent(relativePath, manifest, undefined);
       desired.set(relativePath, content);
       if (!plannedConflicts.has(relativePath)) continue;
       const current = await existingText(root, relativePath);
@@ -301,35 +389,35 @@ export async function runInit({
       else knownConflicts.add(relativePath);
     }
 
-    if (mode === 'abort' && knownConflicts.size > 0) {
-      throw new Error(`Initialization conflicts: ${[...knownConflicts].sort().join(', ')}`);
+    const templateTargets = plan.files.filter((target) => TEMPLATE_FILES.has(target));
+    const templateState = await classifyTemplateTargets(root, plan, manifest, definition);
+    for (const relativePath of templateState.unchanged) unchanged.add(relativePath);
+    for (const relativePath of templateState.conflicts) knownConflicts.add(relativePath);
+
+    const preflightConflicts = [...knownConflicts].sort();
+    if (mode === 'abort' && preflightConflicts.length > 0) {
+      throw new Error(`Initialization conflicts: ${preflightConflicts.join(', ')}`);
+    }
+    if (mode === 'overwrite' && preflightConflicts.length > 0 && confirmOverwrite !== true) {
+      throw new Error('Overwrite mode requires explicit confirmation');
     }
 
-    const templateTargets = plan.files.filter((target) => TEMPLATE_FILES.has(target));
     const needsTemplate = templateTargets.some((target) => (
-      !plannedConflicts.has(target) || mode !== 'skip'
+      !unchanged.has(target) && (!plannedConflicts.has(target) || mode !== 'skip')
     ));
     const material = needsTemplate ? await fetchTemplate(definition, { fetchImpl }) : undefined;
 
     if (material) {
-      const existingProvenance = plannedConflicts.has('paper/TEMPLATE.md')
-        ? await existingText(root, 'paper/TEMPLATE.md')
-        : undefined;
-      const retrievalTime = retainedRetrievalTime(existingProvenance);
-      for (const relativePath of templateTargets) {
-        const content = writeContent(relativePath, manifest, definition, material, retrievalTime);
-        desired.set(relativePath, content);
-        if (!plannedConflicts.has(relativePath)) continue;
-        const current = relativePath === 'paper/TEMPLATE.md'
-          ? existingProvenance
-          : await existingText(root, relativePath);
-        if (current === content) unchanged.add(relativePath);
-        else knownConflicts.add(relativePath);
-      }
-    } else {
-      for (const relativePath of templateTargets) {
-        if (plannedConflicts.has(relativePath)) knownConflicts.add(relativePath);
-      }
+      const mainText = writeContent('paper/main.tex', manifest, material);
+      const referencesText = writeContent('paper/references.bib', manifest, material);
+      desired.set('paper/main.tex', mainText);
+      desired.set('paper/references.bib', referencesText);
+      desired.set('paper/TEMPLATE.md', templateProvenance(
+        definition,
+        material,
+        mainText,
+        referencesText
+      ));
     }
 
     const effectivePlan = {
@@ -361,8 +449,13 @@ export async function runInit({
       if (conflicts.has(relativePath)) {
         await overwriteFile(rootCanonical, targetPath, content, writeFileImpl, renameImpl);
       } else {
-        const fileIdentity = await createFile(rootCanonical, targetPath, content, writeFileImpl);
-        createdFiles.push({ path: relativePath, identity: fileIdentity });
+        await createFile(
+          rootCanonical,
+          targetPath,
+          content,
+          writeFileImpl,
+          (fileIdentity) => createdFiles.push({ path: relativePath, identity: fileIdentity })
+        );
       }
     }
 
@@ -374,7 +467,7 @@ export async function runInit({
       template: {
         id: definition.id,
         sourceUrl: definition.sourceUrl,
-        sha256: material?.sha256 ?? null
+        sha256: material?.sha256 ?? templateState.sha256 ?? null
       }
     };
   } catch (error) {

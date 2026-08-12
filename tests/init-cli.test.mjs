@@ -108,14 +108,44 @@ test('applies safely escaped manifest title and authors to concrete IEEE sources
 
 test('same-manifest rerun classifies matching targets as unchanged', async () => {
   await withTempRoot(async (tempRoot) => {
-    const first = await runInit({ rootDir: tempRoot, manifest, fetchImpl: fakeFetch });
-    const second = await runInit({ rootDir: tempRoot, manifest, fetchImpl: fakeFetch });
+    let fetchCalls = 0;
+    const countedFetch = () => {
+      fetchCalls += 1;
+      return fakeFetch();
+    };
+    const first = await runInit({ rootDir: tempRoot, manifest, fetchImpl: countedFetch });
+    const second = await runInit({ rootDir: tempRoot, manifest, fetchImpl: countedFetch });
 
     assert.ok(first.created.length > 0);
+    assert.equal(fetchCalls, 1);
     assert.deepEqual(second.created, []);
     assert.deepEqual(second.skipped, []);
     assert.deepEqual(second.conflicts, []);
     assert.deepEqual(second.unchanged, first.created);
+  });
+});
+
+test('abort reports a changed paper entry point before fetching', async () => {
+  await withTempRoot(async (tempRoot) => {
+    let fetchCalls = 0;
+    await mkdir(path.join(tempRoot, 'paper'));
+    await writeFile(path.join(tempRoot, 'paper/main.tex'), 'changed paper');
+
+    await assert.rejects(
+      runInit({
+        rootDir: tempRoot,
+        manifest,
+        conflictMode: 'abort',
+        fetchImpl: async () => {
+          fetchCalls += 1;
+          return new Response(source);
+        }
+      }),
+      /conflicts: paper\/main\.tex/
+    );
+
+    assert.equal(fetchCalls, 0);
+    assert.equal(await readFile(path.join(tempRoot, 'paper/main.tex'), 'utf8'), 'changed paper');
   });
 });
 
@@ -348,6 +378,63 @@ test('ordinary failure rolls back invocation-created paths and reports the trans
     assert.deepEqual(failure.created, ['README.md']);
     assert.deepEqual(failure.retained, []);
     await assert.rejects(access(path.join(tempRoot, 'README.md')), { code: 'ENOENT' });
+  });
+});
+
+test('tracks and cleans a file created before its injected writer fails', async () => {
+  await withTempRoot(async (tempRoot) => {
+    let failure;
+    await assert.rejects(
+      runInit({
+        rootDir: tempRoot,
+        manifest,
+        fetchImpl: fakeFetch,
+        writeFileImpl: async (targetPath) => {
+          await writeFile(targetPath, 'partial', { flag: 'wx' });
+          throw new Error('injected partial create failure');
+        }
+      }),
+      (error) => {
+        failure = error;
+        return /injected partial create failure/.test(error.message);
+      }
+    );
+
+    assert.deepEqual(failure.created, ['README.md']);
+    assert.deepEqual(failure.retained, []);
+    await assert.rejects(access(path.join(tempRoot, 'README.md')), { code: 'ENOENT' });
+  });
+});
+
+test('retains and reports an overwrite temporary created before writer failure', async () => {
+  await withTempRoot(async (tempRoot) => {
+    await writeFile(path.join(tempRoot, 'README.md'), 'keep');
+    let failure;
+    let temporaryPath;
+    await assert.rejects(
+      runInit({
+        rootDir: tempRoot,
+        manifest,
+        conflictMode: 'overwrite',
+        confirmOverwrite: true,
+        fetchImpl: fakeFetch,
+        writeFileImpl: async (targetPath) => {
+          temporaryPath = targetPath;
+          await writeFile(targetPath, 'partial temporary', { flag: 'wx' });
+          throw new Error('injected overwrite writer failure');
+        }
+      }),
+      (error) => {
+        failure = error;
+        return /retained temporary file/.test(error.message);
+      }
+    );
+
+    const relativeTemporary = path.relative(tempRoot, temporaryPath);
+    assert.deepEqual(failure.created, []);
+    assert.deepEqual(failure.retained, [relativeTemporary]);
+    assert.equal(await readFile(temporaryPath, 'utf8'), 'partial temporary');
+    assert.equal(await readFile(path.join(tempRoot, 'README.md'), 'utf8'), 'keep');
   });
 });
 
