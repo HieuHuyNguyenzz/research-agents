@@ -45,15 +45,33 @@ test('compatibility documentation contains Node portability within the unverifie
   assert.match(text, /does not validate[\s\S]*native[\s\S]*smoke/i);
 });
 
-test('compatibility rows remain explicitly unverified until native smoke evidence is recorded', async () => {
+test('compatibility rows require native smoke evidence before reporting Full support', async () => {
   const text = await fs.readFile('docs/compatibility.md', 'utf8');
-  const rows = text.split('\n').filter((row) => /^\| (Codex|Claude Code|OpenCode) \|/.test(row));
+  const lines = text.split('\n');
+  const header = lines.find((line) => line.startsWith('| Harness |'))
+    .split('|').slice(1, -1).map((cell) => cell.trim());
+  const rows = lines.filter((row) => /^\| (Codex|Claude Code|OpenCode) \|/.test(row))
+    .map((row) => row.split('|').slice(1, -1).map((cell) => cell.trim()));
+  const placeholder = /^(Not recorded|Not yet recorded|—)$/i;
 
+  assert.deepEqual(header, [
+    'Harness', 'Status', 'Tested version', 'Tested date',
+    'Native clean-session command', 'Result', 'Evidence location',
+    'Bootstrap mechanism', 'Fallback'
+  ]);
   assert.equal(rows.length, 3);
   for (const row of rows) {
-    if (row.includes('| Not yet recorded |')) {
-      assert.doesNotMatch(row, /\|\s*Full\b/i);
-      assert.match(row, /\|\s*(Unverified|Pending)\b/i);
+    const [, status, , , command, result, evidence] = row;
+    assert.equal(row.length, header.length);
+    if (/^Full\b/i.test(status)) {
+      assert.doesNotMatch(command, placeholder);
+      assert.doesNotMatch(result, placeholder);
+      assert.doesNotMatch(evidence, placeholder);
+    } else {
+      assert.equal(status, 'Unverified (pending recorded smoke test)');
+      assert.match(command, placeholder);
+      assert.match(result, placeholder);
+      assert.match(evidence, placeholder);
     }
   }
 });

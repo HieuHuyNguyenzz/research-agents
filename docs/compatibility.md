@@ -10,8 +10,12 @@ automated tests. It does not validate native harness installation, discovery,
 or clean-session smoke behavior; that evidence remains required for every
 platform below.
 
-| Harness | Compatibility | Tested version | Bootstrap mechanism | Last verification date | Fallback |
-| --- | --- | --- | --- | --- | --- |
-| Codex | Unverified (pending recorded smoke test) | Not yet recorded | Native skill discovery | Not yet recorded | [Codex mapping](../references/tool-mapping/codex.md) |
-| Claude Code | Unverified (pending recorded smoke test) | Not yet recorded | `SessionStart` hook | Not yet recorded | [Claude Code mapping](../references/tool-mapping/claude-code.md) |
-| OpenCode | Unverified (pending recorded smoke test) | Not yet recorded | Runtime plugin message transform | Not yet recorded | [OpenCode mapping](../references/tool-mapping/opencode.md) |
+A status of `Full` requires a recorded native clean-session command, successful
+result, and transcript or other evidence location. Until those fields are
+recorded, the status must remain `Unverified (pending recorded smoke test)`.
+
+| Harness | Status | Tested version | Tested date | Native clean-session command | Result | Evidence location | Bootstrap mechanism | Fallback |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Codex | Unverified (pending recorded smoke test) | Not recorded | Not recorded | Not recorded | Not recorded | Not recorded | Native skill discovery | [Codex mapping](../references/tool-mapping/codex.md) |
+| Claude Code | Unverified (pending recorded smoke test) | Not recorded | Not recorded | Not recorded | Not recorded | Not recorded | `SessionStart` hook | [Claude Code mapping](../references/tool-mapping/claude-code.md) |
+| OpenCode | Unverified (pending recorded smoke test) | Not recorded | Not recorded | Not recorded | Not recorded | Not recorded | Runtime plugin message transform | [OpenCode mapping](../references/tool-mapping/opencode.md) |
