@@ -1,4 +1,4 @@
-import { lstat, mkdir, open, readFile, rename, rmdir, rm, writeFile } from 'node:fs/promises';
+import { lstat, mkdir, open, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -60,19 +60,6 @@ function parentDirectories(rootDir, relativePaths) {
   ));
 }
 
-function pathIdentity(status) {
-  const dev = Number(status.dev);
-  const ino = Number(status.ino);
-  return Number.isSafeInteger(dev) && Number.isSafeInteger(ino) && ino > 0
-    ? { dev, ino }
-    : undefined;
-}
-
-function hasSameIdentity(status, identity) {
-  const current = pathIdentity(status);
-  return Boolean(current && identity && current.dev === identity.dev && current.ino === identity.ino);
-}
-
 async function assertNotSymlink(targetPath) {
   try {
     const status = await lstat(targetPath);
@@ -84,7 +71,22 @@ async function assertNotSymlink(targetPath) {
   }
 }
 
+async function assertRootAncestorsNotSymlinks(rootDir) {
+  const parsed = path.parse(rootDir);
+  let current = parsed.root;
+  await assertNotSymlink(current);
+
+  for (const segment of path.relative(parsed.root, rootDir).split(path.sep).filter(Boolean)) {
+    current = path.join(current, segment);
+    const status = await assertNotSymlink(current);
+    if (status && !status.isDirectory()) {
+      throw new Error(`Root path is not a directory: ${current}`);
+    }
+  }
+}
+
 async function ensureRootDirectory(rootDir, createdDirectories) {
+  await assertRootAncestorsNotSymlinks(rootDir);
   const rootStatus = await assertNotSymlink(rootDir);
   if (rootStatus) {
     if (!rootStatus.isDirectory()) throw new Error(`Root path is not a directory: ${rootDir}`);
@@ -108,7 +110,8 @@ async function ensureRootDirectory(rootDir, createdDirectories) {
   for (const directory of missing.reverse()) {
     await mkdir(directory);
     const createdStatus = await assertNotSymlink(directory);
-    createdDirectories.push({ path: directory, identity: pathIdentity(createdStatus) });
+    if (!createdStatus?.isDirectory()) throw new Error(`Root path is not a directory: ${directory}`);
+    createdDirectories.push(directory);
   }
 }
 
@@ -120,35 +123,31 @@ async function ensureDirectory(directory, createdDirectories) {
   }
   await mkdir(directory);
   const createdStatus = await assertNotSymlink(directory);
-  createdDirectories.push({ path: directory, identity: pathIdentity(createdStatus) });
+  if (!createdStatus?.isDirectory()) throw new Error(`Directory path is not a directory: ${directory}`);
+  createdDirectories.push(directory);
 }
 
-async function rollback(createdFiles, createdDirectories, rootDir) {
-  for (const created of [...createdFiles].reverse()) {
-    const targetPath = path.join(rootDir, ...created.path.split('/'));
-    const status = await assertNotSymlink(targetPath).catch(() => undefined);
-    if (status && hasSameIdentity(status, created.identity)) {
-      await rm(targetPath, { force: true }).catch(() => {});
-    }
-  }
-  for (const created of [...createdDirectories].reverse()) {
-    const status = await assertNotSymlink(created.path).catch(() => undefined);
-    if (status?.isDirectory() && hasSameIdentity(status, created.identity)) {
-      await rmdir(created.path).catch(() => {});
-    }
-  }
+async function rollback(createdFiles, createdDirectories) {
+  // Node exposes no unlink-at-file-descriptor API. Checking a pathname and
+  // then removing it leaves a replacement race, so rollback is deliberately
+  // conservative: leave created names in place rather than delete another
+  // actor's replacement. The records provide precise partial-failure output.
+  void createdFiles;
+  void createdDirectories;
 }
 
 async function createFile(targetPath, content, writeFileImpl) {
   if (writeFileImpl !== writeFile) {
     await writeFileImpl(targetPath, content, { encoding: 'utf8', flag: 'wx' });
-    return pathIdentity(await assertNotSymlink(targetPath));
+    await assertNotSymlink(targetPath);
+    return;
   }
 
   const handle = await open(targetPath, 'wx');
   try {
     await handle.writeFile(content, 'utf8');
-    return pathIdentity(await handle.stat());
+    await handle.stat();
+    return;
   } finally {
     await handle.close();
   }
@@ -224,10 +223,8 @@ export async function runInit({
       if (conflicts.has(relativePath)) {
         await overwriteFile(targetPath, content, writeFileImpl);
       } else {
-        createdFiles.push({
-          path: relativePath,
-          identity: await createFile(targetPath, content, writeFileImpl)
-        });
+        await createFile(targetPath, content, writeFileImpl);
+        createdFiles.push({ path: relativePath });
       }
     }
 
@@ -242,7 +239,7 @@ export async function runInit({
       }
     };
   } catch (error) {
-    await rollback(createdFiles, createdDirectories, root);
+    await rollback(createdFiles, createdDirectories);
     error.created = createdFiles.map((created) => created.path);
     throw error;
   }

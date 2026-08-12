@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFile as execFileCallback } from 'node:child_process';
-import { mkdir, mkdtemp, readFile, rename, rm, stat, symlink, unlink, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, realpath, rename, rm, stat, symlink, unlink, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { promisify } from 'node:util';
@@ -32,12 +32,16 @@ function fakeFetch() {
 }
 
 async function withTempRoot(run) {
-  const tempRoot = await mkdtemp(path.join(os.tmpdir(), 'research-init-cli-'));
+  const tempRoot = await temporaryDirectory('research-init-cli-');
   try {
     await run(tempRoot);
   } finally {
     await rm(tempRoot, { recursive: true, force: true });
   }
+}
+
+async function temporaryDirectory(prefix) {
+  return mkdtemp(path.join(await realpath(os.tmpdir()), prefix));
 }
 
 async function runCli(args) {
@@ -155,7 +159,7 @@ test('overwrite mode requires an explicit confirmation before replacing conflict
 
 test('rejects symlinked roots and target paths before fetching or writing outside root', async () => {
   await withTempRoot(async (tempRoot) => {
-    const outside = await mkdtemp(path.join(os.tmpdir(), 'research-init-outside-'));
+    const outside = await temporaryDirectory('research-init-outside-');
     const rootLink = `${tempRoot}-link`;
     const outsideReadme = path.join(outside, 'README.md');
     try {
@@ -199,15 +203,29 @@ test('rejects symlinked roots and target paths before fetching or writing outsid
         }),
         /symlink/i
       );
+
+      const nestedRoot = path.join(tempRoot, 'link', 'project');
+      await symlink(outside, path.join(tempRoot, 'link'));
+      await assert.rejects(
+        runInit({
+          rootDir: nestedRoot,
+          manifest,
+          fetchImpl: async () => {
+            throw new Error('template fetch must not run');
+          }
+        }),
+        /symlink/i
+      );
     } finally {
       await unlink(path.join(tempRoot, 'docs')).catch(() => {});
+      await unlink(path.join(tempRoot, 'link')).catch(() => {});
       await unlink(rootLink).catch(() => {});
       await rm(outside, { recursive: true, force: true });
     }
   });
 });
 
-test('rolls back only this invocation\'s new paths when a later write fails', async () => {
+test('leaves invocation-created paths on failure rather than risking deletion of a raced replacement', async () => {
   await withTempRoot(async (tempRoot) => {
     await assert.rejects(
       runInit({
@@ -222,7 +240,7 @@ test('rolls back only this invocation\'s new paths when a later write fails', as
       /EEXIST/
     );
 
-    await assert.rejects(stat(path.join(tempRoot, 'README.md')), { code: 'ENOENT' });
+    assert.ok(await stat(path.join(tempRoot, 'README.md')));
     assert.equal(await readFile(path.join(tempRoot, 'docs/architecture.md'), 'utf8'), 'external conflict');
   });
 });
