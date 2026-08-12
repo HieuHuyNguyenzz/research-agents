@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFile as execFileCallback } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { access, mkdir, mkdtemp, readFile, realpath, rename, rm, stat, symlink, unlink, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -208,6 +209,66 @@ test('skip mode does not fetch a template when all template files conflict', asy
       'paper/main.tex', 'paper/references.bib', 'paper/TEMPLATE.md'
     ]);
     assert.ok(await stat(path.join(tempRoot, 'README.md')));
+  });
+});
+
+test('skip mode treats a partial paper bundle conflict atomically', async () => {
+  await withTempRoot(async (tempRoot) => {
+    const paperDir = path.join(tempRoot, 'paper');
+    await mkdir(paperDir, { recursive: true });
+    await writeFile(path.join(paperDir, 'main.tex'), 'edited main');
+    let fetchCalls = 0;
+
+    const result = await runInit({
+      rootDir: tempRoot,
+      manifest,
+      conflictMode: 'skip',
+      fetchImpl: async () => {
+        fetchCalls += 1;
+        return new Response(source);
+      }
+    });
+
+    assert.equal(fetchCalls, 0);
+    assert.deepEqual(result.skipped, [
+      'paper/main.tex', 'paper/references.bib', 'paper/TEMPLATE.md'
+    ]);
+    assert.deepEqual(result.unchanged, []);
+    assert.equal(await readFile(path.join(paperDir, 'main.tex'), 'utf8'), 'edited main');
+    await assert.rejects(access(path.join(paperDir, 'references.bib')), { code: 'ENOENT' });
+    await assert.rejects(access(path.join(paperDir, 'TEMPLATE.md')), { code: 'ENOENT' });
+  });
+});
+
+test('skip mode does not synthesize provenance for an incomplete generated bundle', async () => {
+  await withTempRoot(async (tempRoot) => {
+    const first = await runInit({ rootDir: tempRoot, manifest, fetchImpl: fakeFetch });
+    const mainPath = path.join(tempRoot, 'paper/main.tex');
+    const referencesPath = path.join(tempRoot, 'paper/references.bib');
+    const templatePath = path.join(tempRoot, 'paper/TEMPLATE.md');
+    const mainBefore = await readFile(mainPath, 'utf8');
+    await unlink(templatePath);
+    let fetchCalls = 0;
+
+    const result = await runInit({
+      rootDir: tempRoot,
+      manifest,
+      conflictMode: 'skip',
+      fetchImpl: async () => {
+        fetchCalls += 1;
+        return new Response(source);
+      }
+    });
+
+    assert.equal(fetchCalls, 0);
+    assert.deepEqual(result.skipped, [
+      'paper/main.tex', 'paper/references.bib', 'paper/TEMPLATE.md'
+    ]);
+    assert.equal(result.template.sha256, null);
+    const mainAfter = await readFile(mainPath, 'utf8');
+    assert.equal(createHash('sha256').update(mainAfter).digest('hex'), createHash('sha256').update(mainBefore).digest('hex'));
+    assert.equal(await readFile(referencesPath, 'utf8'), '');
+    await assert.rejects(access(templatePath), { code: 'ENOENT' });
   });
 });
 

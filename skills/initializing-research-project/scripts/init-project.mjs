@@ -397,6 +397,10 @@ export async function runInit({
     const templateState = await classifyTemplateTargets(root, plan, manifest, definition);
     for (const relativePath of templateState.unchanged) unchanged.add(relativePath);
     for (const relativePath of templateState.conflicts) knownConflicts.add(relativePath);
+    const partialTemplateConflict = templateState.conflicts.length > 0;
+    if (mode === 'skip' && partialTemplateConflict) {
+      for (const relativePath of TEMPLATE_FILES) knownConflicts.add(relativePath);
+    }
 
     const preflightConflicts = [...knownConflicts].sort();
     if (mode === 'abort' && preflightConflicts.length > 0) {
@@ -407,7 +411,9 @@ export async function runInit({
     }
 
     const needsTemplate = templateTargets.some((target) => (
-      !unchanged.has(target) && (!plannedConflicts.has(target) || mode !== 'skip')
+      !unchanged.has(target)
+      && !(mode === 'skip' && partialTemplateConflict)
+      && (!plannedConflicts.has(target) || mode !== 'skip')
     ));
     const material = needsTemplate ? await fetchTemplate(definition, { fetchImpl }) : undefined;
 
