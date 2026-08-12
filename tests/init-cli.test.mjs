@@ -381,7 +381,7 @@ test('ordinary failure rolls back invocation-created paths and reports the trans
   });
 });
 
-test('tracks and cleans a file created before its injected writer fails', async () => {
+test('retains an identity-unknown file created before its injected writer fails', async () => {
   await withTempRoot(async (tempRoot) => {
     let failure;
     await assert.rejects(
@@ -401,8 +401,36 @@ test('tracks and cleans a file created before its injected writer fails', async 
     );
 
     assert.deepEqual(failure.created, ['README.md']);
-    assert.deepEqual(failure.retained, []);
-    await assert.rejects(access(path.join(tempRoot, 'README.md')), { code: 'ENOENT' });
+    assert.deepEqual(failure.retained, ['README.md']);
+    assert.equal(await readFile(path.join(tempRoot, 'README.md'), 'utf8'), 'partial');
+  });
+});
+
+test('does not delete a replacement installed before an injected writer rejects', async () => {
+  await withTempRoot(async (tempRoot) => {
+    const readme = path.join(tempRoot, 'README.md');
+    let failure;
+    await assert.rejects(
+      runInit({
+        rootDir: tempRoot,
+        manifest,
+        fetchImpl: fakeFetch,
+        writeFileImpl: async (targetPath) => {
+          await writeFile(targetPath, 'partial original', { flag: 'wx' });
+          await rename(targetPath, path.join(tempRoot, 'partial-original.md'));
+          await writeFile(targetPath, 'external replacement');
+          throw new Error('injected raced create failure');
+        }
+      }),
+      (error) => {
+        failure = error;
+        return /injected raced create failure/.test(error.message);
+      }
+    );
+
+    assert.equal(await readFile(readme, 'utf8'), 'external replacement');
+    assert.deepEqual(failure.created, ['README.md']);
+    assert.deepEqual(failure.retained, ['README.md']);
   });
 });
 

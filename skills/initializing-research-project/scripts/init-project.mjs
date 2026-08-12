@@ -290,8 +290,12 @@ async function createFile(rootCanonical, targetPath, content, writeFileImpl, onC
     try {
       await writeFileImpl(targetPath, content, { encoding: 'utf8', flag: 'wx' });
     } catch (error) {
-      const fileIdentity = await createdFileIdentity(targetPath);
-      if (fileIdentity) onCreated(fileIdentity);
+      if (await createdFileIdentity(targetPath)) {
+        // A custom writer did not expose the inode at creation time. A status
+        // observed after rejection may describe a raced replacement, so this
+        // pathname is report-only and must never enter identity-safe rollback.
+        error.uncertainCreatedPath = targetPath;
+      }
       throw error;
     }
     const fileIdentity = await createdFileIdentity(targetPath);
@@ -472,10 +476,21 @@ export async function runInit({
     };
   } catch (error) {
     const retained = await rollback(root, createdFiles, createdDirectories);
+    let uncertainCreated;
+    if (typeof error.uncertainCreatedPath === 'string'
+      && isWithinRoot(root, error.uncertainCreatedPath)) {
+      uncertainCreated = path.relative(root, error.uncertainCreatedPath);
+      retained.push(uncertainCreated);
+    }
     if (typeof error.temporaryPath === 'string' && isWithinRoot(root, error.temporaryPath)) {
       retained.push(path.relative(root, error.temporaryPath));
     }
-    error.created = createdFiles.map((created) => created.path);
+    error.created = [
+      ...new Set([
+        ...createdFiles.map((created) => created.path),
+        ...(uncertainCreated ? [uncertainCreated] : [])
+      ])
+    ];
     error.retained = [...new Set(retained)].sort();
     throw error;
   }
