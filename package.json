@@ -7,6 +7,7 @@
   "scripts": {
     "check:content": "node scripts/check-shared-content.mjs",
     "test": "node --test",
-    "verify": "npm run check:content && npm test"
+    "test:init-integration": "node --test tests/init-integration.test.mjs",
+    "verify": "npm run check:content && npm test && npm run test:init-integration"
   }
 }

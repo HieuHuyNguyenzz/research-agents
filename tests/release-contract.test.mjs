@@ -16,6 +16,14 @@ test('native manifests use the package version and shared skills path', async ()
   assert.equal(codex.skills, './skills/');
 });
 
+test('release verification explicitly includes the initializer integration contract', async () => {
+  const pkg = await json('package.json');
+
+  assert.match(pkg.scripts.verify, /npm run test:init-integration/);
+  await fs.access('skills/initializing-research-project/SKILL.md');
+  await fs.access('scripts/init-project.mjs');
+});
+
 test('installation documentation forbids global-configuration edits', async () => {
   for (const file of [
     'docs/install/codex.md',
