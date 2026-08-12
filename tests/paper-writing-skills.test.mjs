@@ -68,8 +68,8 @@ name: reviewing-research-paper
 description: Use when assessing a completed research manuscript before submission.
 ---
 
-Review the complete paper in \`paper/\` and its supporting repository. Preserve
-existing files and do not modify files; stop unless the user requests fixes.
+Inspect the complete paper in \`paper/\` and its supporting repository. Preserve
+existing files. The review does not modify files. Do not modify files. Stop unless the user requests fixes.
 
 Inspect correctness, completeness, coherence, venue fit, reproducibility,
 citations, LaTeX, terminology, code, configs, results, result artifacts,
@@ -101,8 +101,17 @@ test('paper-writing contract rejects plain disallowed tool names', () => {
   ));
 });
 
+test('valid review fixture satisfies the complete review contract', () => {
+  assert.doesNotThrow(() => assertPaperWritingSkillContract(
+    'reviewing-research-paper', validReviewSkill(''), PAPER_SKILLS['reviewing-research-paper']
+  ));
+});
+
 test('review contract rejects an omitted complete-paper and repository inspection', () => {
-  const text = validReviewSkill('Inspect only the abstract.');
+  const text = validReviewSkill('').replace(
+    'Inspect the complete paper in `paper/` and its supporting repository.',
+    'Inspect only the abstract.'
+  );
   assert.throws(() => assertPaperWritingSkillContract(
     'reviewing-research-paper', text, PAPER_SKILLS['reviewing-research-paper']
   ));

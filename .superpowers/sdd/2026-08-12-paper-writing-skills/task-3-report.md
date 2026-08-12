@@ -16,6 +16,19 @@
   - Expected remaining failure: library/README discoverability, owned by Task 4.
 - `git diff --check` completed without whitespace errors.
 
+## Fix Round 2
+
+- Repaired `validReviewSkill` to satisfy the complete review contract itself,
+  including the exact complete-paper/repository inspection scope.
+- Added a positive fixture test before the negative mutations; the scope negative
+  now replaces that baseline scope with abstract-only inspection.
+- Focused test: `node --test tests/paper-writing-skills.test.mjs`
+  - 16 tests passed, including the valid baseline and six targeted negative
+    regressions.
+  - One discovery failure remains, as expected until Task 4 updates the skill
+    index and README.
+- `git diff --check` completed without whitespace errors.
+
 ## Scope
 
 No manuscript, repository, or other user files were modified by the review skill.
