@@ -10,7 +10,14 @@ const PAPER_SKILLS = {
   'writing-paper-methodology': ['paper/sections/methodology.tex', 'methodology', 'code', 'algorithm'],
   'writing-paper-experimental-results': ['paper/sections/experimental-results.tex', 'experimental results', 'metrics', 'uncertainty'],
   'writing-paper-conclusion': ['paper/sections/conclusion.tex', 'conclusion', 'limitations', 'future work'],
-  'reviewing-research-paper': ['paper/', 'review', 'blocking', 'important', 'minor', 'does not modify']
+  'reviewing-research-paper': [
+    'complete paper', 'correctness', 'completeness', 'coherence', 'venue fit',
+    'reproducibility', 'citation', 'latex', 'code', 'configs', 'results',
+    'section ordering', 'includes', 'citation-key', 'terminology',
+    'result artifacts', 'implementation', 'summary', 'findings',
+    'blocking', 'important', 'minor', 'location', 'evidence', 'recommendation',
+    'does not modify'
+  ]
 };
 
 const DISALLOWED_TOOL_NAMES = [
@@ -28,6 +35,11 @@ function assertPaperWritingSkillContract(name, text, phrases) {
   assert.match(text, /preserv|existing/i);
   assert.match(text, /missing|do not invent|must not/i);
   assert.doesNotMatch(text, new RegExp(`\\b(${DISALLOWED_TOOL_NAMES.join('|')})\\b`, 'i'));
+  if (name === 'reviewing-research-paper') {
+    assert.match(text, /severity[^\n]*exactly `blocking`, `important`, or `minor`/i);
+    assert.match(text, /do not modify files/i);
+    assert.match(text, /user requests fixes/i);
+  }
 }
 
 for (const [name, phrases] of Object.entries(PAPER_SKILLS)) {
