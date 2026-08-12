@@ -13,3 +13,9 @@ test('init skill remains portable', async () => {
   const text = await fs.readFile('skills/initializing-research-project/SKILL.md', 'utf8');
   assert.doesNotMatch(text, /\`(bash|webfetch|apply_patch|Bash|Read|Task)\`/i);
 });
+
+test('init skill resolves the initializer relative to its installed package', async () => {
+  const text = await fs.readFile('skills/initializing-research-project/SKILL.md', 'utf8');
+  assert.match(text, /<skill-directory>\/scripts\/init-project\.mjs/);
+  assert.doesNotMatch(text, /node scripts\/init-project\.mjs/);
+});

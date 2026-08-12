@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFile as execFileCallback } from 'node:child_process';
-import { mkdir, mkdtemp, readFile, realpath, rename, rm, stat, symlink, unlink, writeFile } from 'node:fs/promises';
+import { access, mkdir, mkdtemp, readFile, realpath, rename, rm, stat, symlink, unlink, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { promisify } from 'node:util';
@@ -66,10 +66,56 @@ test('creates an empty repository and reports all generated paths', async () => 
     assert.ok(result.created.includes('README.md'));
     assert.ok(result.created.includes('paper/TEMPLATE.md'));
     assert.deepEqual(result.skipped, []);
+    assert.deepEqual(result.unchanged, []);
     assert.deepEqual(result.conflicts, []);
     assert.deepEqual(result.template.id, 'ieee-conference');
     assert.ok(await stat(path.join(tempRoot, 'paper/main.tex')));
     assert.ok(await stat(path.join(tempRoot, 'paper/TEMPLATE.md')));
+  });
+});
+
+test('applies safely escaped manifest title and authors to concrete IEEE sources', async () => {
+  for (const [paperTemplate, classOption] of [
+    ['ieee-conference', 'conference'],
+    ['ieee-journal', 'journal']
+  ]) {
+    await withTempRoot(async (tempRoot) => {
+      const result = await runInit({
+        rootDir: tempRoot,
+        manifest: {
+          ...manifest,
+          projectName: 'Rate & Accuracy_100%',
+          authors: ['Ada #1', 'Grace {Hopper}'],
+          paperTemplate
+        },
+        fetchImpl: async () => new Response(String.raw`\documentclass[${classOption}]{IEEEtran}
+\title{Bare Demo of IEEEtran.cls for IEEE ${classOption} papers}
+\author{First A. Author, Second B. Author}
+\begin{document}
+\maketitle
+\end{document}
+`)
+      });
+
+      assert.equal(result.template.id, paperTemplate);
+      const paper = await readFile(path.join(tempRoot, 'paper/main.tex'), 'utf8');
+      assert.match(paper, /\\title\{Rate \\& Accuracy\\_100\\%\}/);
+      assert.match(paper, /\\author\{Ada \\#1, Grace \\{Hopper\\}\}/);
+      assert.doesNotMatch(paper, /Bare Demo|First A\. Author/);
+    });
+  }
+});
+
+test('same-manifest rerun classifies matching targets as unchanged', async () => {
+  await withTempRoot(async (tempRoot) => {
+    const first = await runInit({ rootDir: tempRoot, manifest, fetchImpl: fakeFetch });
+    const second = await runInit({ rootDir: tempRoot, manifest, fetchImpl: fakeFetch });
+
+    assert.ok(first.created.length > 0);
+    assert.deepEqual(second.created, []);
+    assert.deepEqual(second.skipped, []);
+    assert.deepEqual(second.conflicts, []);
+    assert.deepEqual(second.unchanged, first.created);
   });
 });
 
@@ -280,29 +326,35 @@ test('retains a replaced overwrite temporary file after a failed rename', async 
   });
 });
 
-test('leaves invocation-created paths on failure rather than risking deletion of a raced replacement', async () => {
+test('ordinary failure rolls back invocation-created paths and reports the transaction', async () => {
   await withTempRoot(async (tempRoot) => {
+    let failure;
     await assert.rejects(
       runInit({
         rootDir: tempRoot,
         manifest,
-        fetchImpl: async () => {
-          await mkdir(path.join(tempRoot, 'docs'), { recursive: true });
-          await writeFile(path.join(tempRoot, 'docs/architecture.md'), 'external conflict');
-          return new Response(source);
+        fetchImpl: fakeFetch,
+        writeFileImpl: async (targetPath, content, options) => {
+          if (targetPath.endsWith('AGENTS.md')) throw new Error('injected write failure');
+          await writeFile(targetPath, content, options);
         }
       }),
-      /EEXIST/
+      (error) => {
+        failure = error;
+        return /injected write failure/.test(error.message);
+      }
     );
 
-    assert.ok(await stat(path.join(tempRoot, 'README.md')));
-    assert.equal(await readFile(path.join(tempRoot, 'docs/architecture.md'), 'utf8'), 'external conflict');
+    assert.deepEqual(failure.created, ['README.md']);
+    assert.deepEqual(failure.retained, []);
+    await assert.rejects(access(path.join(tempRoot, 'README.md')), { code: 'ENOENT' });
   });
 });
 
-test('rollback preserves a concurrently replaced invocation-created path', async () => {
+test('rollback preserves and reports a concurrently replaced invocation-created path', async () => {
   await withTempRoot(async (tempRoot) => {
     const readme = path.join(tempRoot, 'README.md');
+    let failure;
     await assert.rejects(
       runInit({
         rootDir: tempRoot,
@@ -317,9 +369,14 @@ test('rollback preserves a concurrently replaced invocation-created path', async
           await writeFile(targetPath, content, options);
         }
       }),
-      /injected later write failure/
+      (error) => {
+        failure = error;
+        return /injected later write failure/.test(error.message);
+      }
     );
     assert.equal(await readFile(readme, 'utf8'), 'external replacement');
+    assert.deepEqual(failure.created, ['README.md']);
+    assert.deepEqual(failure.retained, ['README.md']);
   });
 });
 
@@ -385,6 +442,24 @@ test('CLI argument failures use exit code 2 and concise stderr messages', async 
   });
 });
 
+test('CLI runtime failures print a structured created and retained path report', async () => {
+  await withTempRoot(async (tempRoot) => {
+    const manifestPath = path.join(tempRoot, 'manifest.json');
+    await writeFile(manifestPath, JSON.stringify(manifest), 'utf8');
+
+    const result = await runCli([
+      '--root', manifestPath, '--manifest', manifestPath, '--conflicts', 'abort'
+    ]);
+
+    assert.equal(result.code, 1);
+    assert.deepEqual(JSON.parse(result.stderr), {
+      error: `Root path is not a directory: ${manifestPath}`,
+      created: [],
+      retained: []
+    });
+  });
+});
+
 test('CLI prints a stable JSON success report on stdout', async () => {
   await withTempRoot(async (tempRoot) => {
     const manifestPath = path.join(tempRoot, 'manifest.json');
@@ -415,6 +490,7 @@ test('CLI prints a stable JSON success report on stdout', async () => {
         'superpowers/plans/.gitkeep', 'superpowers/decisions/.gitkeep'
       ],
       skipped: ['paper/main.tex', 'paper/references.bib', 'paper/TEMPLATE.md'],
+      unchanged: [],
       conflicts: ['paper/TEMPLATE.md', 'paper/main.tex', 'paper/references.bib'],
       template: {
         id: 'ieee-conference',

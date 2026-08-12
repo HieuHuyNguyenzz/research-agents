@@ -1,6 +1,12 @@
 import assert from 'node:assert/strict';
+import { execFile as execFileCallback } from 'node:child_process';
 import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+import { promisify } from 'node:util';
 import test from 'node:test';
+
+const execFile = promisify(execFileCallback);
 
 async function exists(file) {
   try {
@@ -25,13 +31,53 @@ test('verify contract includes the init skill and CLI entry point', async () => 
   const pkg = JSON.parse(await fs.readFile('package.json', 'utf8'));
   assert.match(pkg.scripts.verify, /npm test/);
   assert.equal(await exists('skills/initializing-research-project/SKILL.md'), true);
+  assert.equal(await exists('skills/initializing-research-project/scripts/init-project.mjs'), true);
   assert.equal(await exists('scripts/init-project.mjs'), true);
 });
 
 test('initializer skill invokes the portable CLI without global-agent configuration instructions', async () => {
   const skill = await fs.readFile('skills/initializing-research-project/SKILL.md', 'utf8');
-  assert.match(skill, /node scripts\/init-project\.mjs --root <target-directory> --manifest <manifest\.json> --conflicts abort/);
+  assert.match(skill, /node <skill-directory>\/scripts\/init-project\.mjs --root <target-directory> --manifest <manifest\.json> --conflicts abort/);
   assert.doesNotMatch(skill, /global.*(AGENTS|CLAUDE|opencode)/i);
+});
+
+test('an installed skill runs its bundled CLI from an unrelated working directory', async () => {
+  const tempRoot = await fs.realpath(
+    await fs.mkdtemp(path.join(os.tmpdir(), 'installed-init-skill-'))
+  );
+  try {
+    const installedSkill = path.join(tempRoot, 'installed skill');
+    const target = path.join(tempRoot, 'research project');
+    const unrelatedCwd = path.join(tempRoot, 'unrelated cwd');
+    const manifestPath = path.join(tempRoot, 'manifest.json');
+    await fs.cp('skills/initializing-research-project', installedSkill, { recursive: true });
+    await fs.mkdir(path.join(target, 'paper'), { recursive: true });
+    await fs.mkdir(unrelatedCwd);
+    await Promise.all([
+      fs.writeFile(path.join(target, 'paper/main.tex'), 'keep'),
+      fs.writeFile(path.join(target, 'paper/references.bib'), 'keep'),
+      fs.writeFile(path.join(target, 'paper/TEMPLATE.md'), 'keep'),
+      fs.writeFile(manifestPath, JSON.stringify({
+        projectName: 'Installed Skill',
+        overview: 'Verify standalone execution.',
+        paperTemplate: 'ieee-conference'
+      }))
+    ]);
+
+    const { stdout, stderr } = await execFile(process.execPath, [
+      path.join(installedSkill, 'scripts/init-project.mjs'),
+      '--root', target,
+      '--manifest', manifestPath,
+      '--conflicts', 'skip'
+    ], { cwd: unrelatedCwd });
+
+    assert.equal(stderr, '');
+    const report = JSON.parse(stdout);
+    assert.ok(report.created.includes('README.md'));
+    assert.match(await fs.readFile(path.join(target, 'README.md'), 'utf8'), /Installed Skill/);
+  } finally {
+    await fs.rm(tempRoot, { recursive: true, force: true });
+  }
 });
 
 test('installation pages describe the initializer request, confirmation, and template provenance', async () => {

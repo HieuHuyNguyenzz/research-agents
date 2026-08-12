@@ -30,9 +30,11 @@ confirms.
 Create a temporary JSON file containing the confirmed manifest, then invoke the
 portable initializer with Node:
 
-`node scripts/init-project.mjs --root <target-directory> --manifest <manifest.json> --conflicts abort`
+`node <skill-directory>/scripts/init-project.mjs --root <target-directory> --manifest <manifest.json> --conflicts abort`
 
-Report its result, including created, skipped, and conflicting paths. If it
+Resolve `<skill-directory>` to the directory containing this `SKILL.md`; do not
+assume the current working directory is the source repository. Report the
+result, including created, unchanged, skipped, and conflicting paths. If it
 reports a conflict, show the complete conflict list and ask the user which mode
 to use:
 
