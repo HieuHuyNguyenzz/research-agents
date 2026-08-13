@@ -44,7 +44,7 @@ for (const [name, phrases] of Object.entries(CONTRACTS)) {
 }
 
 test('library index and README discover the research analysis workflow', async () => {
-  const index = await fs.readFile(path.join(ROOT, 'skills', 'listing-research-skills', 'SKILL.md'), 'utf8');
+  const index = await fs.readFile(path.join(ROOT, 'skills', 'research-listing-skills', 'SKILL.md'), 'utf8');
   const readme = await fs.readFile(path.join(ROOT, 'README.md'), 'utf8');
   for (const name of Object.keys(CONTRACTS)) {
     assert.match(index, new RegExp(name));

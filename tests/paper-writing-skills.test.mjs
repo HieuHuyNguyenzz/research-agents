@@ -274,7 +274,7 @@ function assertPaperWritingDiscovery(index, readme) {
 }
 
 test('paper-writing skills are discoverable in the library and README', async () => {
-  const index = await fs.readFile('skills/listing-research-skills/SKILL.md', 'utf8');
+  const index = await fs.readFile('skills/research-listing-skills/SKILL.md', 'utf8');
   const readme = await fs.readFile('README.md', 'utf8');
   assertPaperWritingDiscovery(index, readme);
 });

@@ -1,5 +1,5 @@
 ---
-name: initializing-research-project
+name: research-initializing-project
 description: Use when a user asks to initialize, scaffold, or set up a new research project repository.
 ---
 

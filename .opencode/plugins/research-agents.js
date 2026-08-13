@@ -10,7 +10,7 @@ let bootstrap;
 function loadBootstrap() {
   if (bootstrap) return bootstrap;
 
-  const skill = fs.readFileSync(path.join(skillsDir, 'using-research-skills', 'SKILL.md'), 'utf8');
+  const skill = fs.readFileSync(path.join(skillsDir, 'research-using-skills', 'SKILL.md'), 'utf8');
   const mapping = fs.readFileSync(path.join(rootDir, 'references', 'tool-mapping', 'opencode.md'), 'utf8');
   bootstrap = `<IMPORTANT>\n${skill}\n\n${mapping}\n</IMPORTANT>`;
   return bootstrap;
@@ -25,7 +25,7 @@ export async function ResearchAgentsPlugin() {
     },
     async 'experimental.chat.messages.transform'(_input, output) {
       const firstUser = output.messages.find((message) => message.info.role === 'user');
-      if (!firstUser?.parts?.length || firstUser.parts.some((part) => part.text?.includes('using-research-skills'))) return;
+      if (!firstUser?.parts?.length || firstUser.parts.some((part) => part.text?.includes('research-using-skills'))) return;
       firstUser.parts.unshift({ type: 'text', text: loadBootstrap() });
     }
   };

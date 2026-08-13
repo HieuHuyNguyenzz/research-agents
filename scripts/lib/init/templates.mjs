@@ -1,1 +1,1 @@
-export * from '../../../skills/initializing-research-project/scripts/lib/init/templates.mjs';
+export * from '../../../skills/research-initializing-project/scripts/lib/init/templates.mjs';

@@ -1,5 +1,5 @@
 ---
-name: using-research-skills
+name: research-using-skills
 description: Use when beginning work and you need to discover and apply installed research skills before taking task actions.
 ---
 

@@ -20,7 +20,7 @@ test('release verification explicitly includes the initializer integration contr
   const pkg = await json('package.json');
 
   assert.match(pkg.scripts.verify, /npm run test:init-integration/);
-  await fs.access('skills/initializing-research-project/SKILL.md');
+  await fs.access('skills/research-initializing-project/SKILL.md');
   await fs.access('scripts/init-project.mjs');
 });
 

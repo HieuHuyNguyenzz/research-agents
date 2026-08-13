@@ -18,9 +18,9 @@ test('session-start emits Claude Code additional context and does not write file
   assert.equal(result.status, 0, result.stderr);
   const output = JSON.parse(result.stdout);
   assert.equal(output.hookSpecificOutput.hookEventName, 'SessionStart');
-  assert.match(output.hookSpecificOutput.additionalContext, /using-research-skills/);
+  assert.match(output.hookSpecificOutput.additionalContext, /research-using-skills/);
   assert.match(output.hookSpecificOutput.additionalContext, /Tool Mapping for Claude Code/);
-  const content = await fs.readFile('skills/using-research-skills/SKILL.md', 'utf8');
+  const content = await fs.readFile('skills/research-using-skills/SKILL.md', 'utf8');
   const mapping = await fs.readFile('references/tool-mapping/claude-code.md', 'utf8');
   assert.equal(output.hookSpecificOutput.additionalContext, `<IMPORTANT>\n${content}\n\n${mapping}\n</IMPORTANT>`);
 });

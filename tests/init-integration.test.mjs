@@ -30,13 +30,13 @@ function hasCompleteFullEvidence(row) {
 test('verify contract includes the init skill and CLI entry point', async () => {
   const pkg = JSON.parse(await fs.readFile('package.json', 'utf8'));
   assert.match(pkg.scripts.verify, /npm test/);
-  assert.equal(await exists('skills/initializing-research-project/SKILL.md'), true);
-  assert.equal(await exists('skills/initializing-research-project/scripts/init-project.mjs'), true);
+  assert.equal(await exists('skills/research-initializing-project/SKILL.md'), true);
+  assert.equal(await exists('skills/research-initializing-project/scripts/init-project.mjs'), true);
   assert.equal(await exists('scripts/init-project.mjs'), true);
 });
 
 test('initializer skill invokes the portable CLI without global-agent configuration instructions', async () => {
-  const skill = await fs.readFile('skills/initializing-research-project/SKILL.md', 'utf8');
+  const skill = await fs.readFile('skills/research-initializing-project/SKILL.md', 'utf8');
   assert.match(skill, /node <skill-directory>\/scripts\/init-project\.mjs --root <target-directory> --manifest <manifest\.json> --conflicts abort/);
   assert.doesNotMatch(skill, /global.*(AGENTS|CLAUDE|opencode)/i);
 });
@@ -50,7 +50,7 @@ test('an installed skill runs its bundled CLI from an unrelated working director
     const target = path.join(tempRoot, 'research project');
     const unrelatedCwd = path.join(tempRoot, 'unrelated cwd');
     const manifestPath = path.join(tempRoot, 'manifest.json');
-    await fs.cp('skills/initializing-research-project', installedSkill, { recursive: true });
+    await fs.cp('skills/research-initializing-project', installedSkill, { recursive: true });
     await fs.mkdir(path.join(target, 'paper'), { recursive: true });
     await fs.mkdir(unrelatedCwd);
     await Promise.all([

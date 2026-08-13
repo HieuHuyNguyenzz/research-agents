@@ -1,14 +1,14 @@
 ---
-name: listing-research-skills
+name: research-listing-skills
 description: Use when a user asks which research skills are installed or wants a concise capability index.
 ---
 
 List the installed research skills and their descriptions. Do not invent skills
 that are not installed. The current library includes:
 
-- `using-research-skills`: discover and apply an installed research skill.
-- `listing-research-skills`: enumerate the installed research skills.
-- `initializing-research-project`: scaffold a reproducible research project.
+- `research-using-skills`: discover and apply an installed research skill.
+- `research-listing-skills`: enumerate the installed research skills.
+- `research-initializing-project`: scaffold a reproducible research project.
 - `reading-research-paper`: extract evidence and implementation details from a
   paper.
 - `planning-paper-reimplementation`: plan a faithful paper reproduction in the

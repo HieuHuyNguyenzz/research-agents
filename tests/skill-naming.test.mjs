@@ -5,9 +5,9 @@ import test from 'node:test';
 
 const ROOT = process.cwd();
 const CANONICAL = [
-  'using-research-skills',
-  'listing-research-skills',
-  'initializing-research-project',
+  'research-using-skills',
+  'research-listing-skills',
+  'research-initializing-project',
   'reading-research-paper',
   'planning-paper-reimplementation',
   'analyzing-experiment-results',
@@ -21,7 +21,13 @@ test('research skills use canonical action-oriented names', async () => {
     assert.match(text, new RegExp(`^name: ${name}$`, 'm'));
     assert.match(text, /^description: Use when\b/m);
   }
-  for (const legacy of ['using-research-agents', 'library-index']) {
-    await assert.rejects(fs.access(path.join(ROOT, 'skills', legacy)));
+  for (const legacy of [
+    'using-research-agents',
+    'library-index',
+    'using-research-skills',
+    'listing-research-skills',
+    'initializing-research-project'
+  ]) {
+    await assert.rejects(fs.access(path.join(ROOT, 'skills', legacy, 'SKILL.md')));
   }
 });
