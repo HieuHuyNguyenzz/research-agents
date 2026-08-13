@@ -38,6 +38,12 @@ Paper:
 - `paper-reviewing`: assess the complete paper and repository, then
   report structured submission-readiness findings.
 
+Experiments:
+
+- `experiments-designing-configurations`: collaborate on a scientifically
+  complete experiment matrix and materialize confirmed repository-native
+  configurations.
+
 Results:
 
 - `results-analyzing-experiments`: turn result artifacts into evidence and a

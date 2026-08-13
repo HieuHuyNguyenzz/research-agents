@@ -51,13 +51,17 @@ After initialization, the shared research skills support this sequence:
 
 1. `paper-reading` — build an evidence map from a paper.
 2. `paper-planning-reimplementation` — map the paper to code, data, and tests.
-3. `results-analyzing-experiments` — inspect metrics, runs, baselines, and
-   ablations under `results/`.
-4. `notebook-creating-research` — produce a rerunnable notebook under
+3. `experiments-designing-configurations` — inspect repository evidence,
+   brainstorm unresolved choices one at a time, and confirm a `core` plus
+   `supplementary` experiment matrix before writing repository-native configs.
+4. `results-analyzing-experiments` — inspect metrics, runs, baselines, and
+   ablations under `results/` after experiments have been executed.
+5. `notebook-creating-research` — produce a rerunnable notebook under
    `results/analysis/`.
 
-Ask the coding agent naturally, for example: `Analyze the experiment results in
-results/raw and prepare a paper-ready notebook.`
+Ask naturally: `Design the experiment matrix and configurations needed to support this paper.`
+
+After execution, ask: `Analyze the experiment results in results/raw and prepare a paper-ready notebook.`
 
 ## Repository documentation
 

@@ -101,3 +101,24 @@ test('experiments-designing-configurations validates safely and reports the outc
   for (const field of REPORT_FIELDS) assert.match(text, new RegExp(`\\*\\*${field}:\\*\\*`));
   assert.ok(text.split('\n').length < 500);
 });
+
+test('catalog and README expose experiment design before result analysis', async () => {
+  const [catalog, readme] = await Promise.all([
+    fs.readFile('skills/research-listing-skills/SKILL.md', 'utf8'),
+    fs.readFile('README.md', 'utf8')
+  ]);
+
+  assert.match(catalog, /Experiments:[\s\S]*`experiments-designing-configurations`/);
+  assert.match(catalog, /matrix|configurations/i);
+
+  const workflow = readme.match(/## Research workflow\n([\s\S]*?)\n## Repository documentation/);
+  assert.ok(workflow, 'README must contain a bounded research workflow section');
+  const designAt = workflow[1].indexOf('`experiments-designing-configurations`');
+  const analyzeAt = workflow[1].indexOf('`results-analyzing-experiments`');
+  assert.ok(designAt >= 0 && analyzeAt > designAt);
+  assert.match(workflow[1], /core[^.]*supplementary/i);
+  assert.match(
+    workflow[1],
+    /Design the experiment matrix and configurations needed to support this paper\./
+  );
+});
