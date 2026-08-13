@@ -21,13 +21,16 @@ Track verified facts, assumptions, contradictions, and unresolved decisions
 internally. Ask one question at a time only for a missing or conflicting
 decision that affects scientific validity or a runnable config. Do not repeat a
 fixed questionnaire when repository evidence already answers the question.
+When offering choices, explain their scientific trade-offs and give a
+recommendation grounded in the inspected evidence.
 
 Use the repository, paper, and bibliography first. If they cannot justify a
 baseline or protocol, ask the user for permission before searching the web.
 When approved, prefer primary papers, official benchmarks, and official dataset
 or method documentation. For external evidence, record its title or identifier,
 source URL, and the decision it supports. Do not use an unverified external
-value in a config.
+value in a config. When web access is unavailable or permission is declined,
+keep the decision unresolved or mark the affected experiment `blocked`.
 
 ## Build the scientific matrix
 
@@ -40,7 +43,7 @@ Design both tiers:
 Do not remove a scientifically necessary experiment because of compute cost.
 Expose resource implications so the user can plan execution. Give every entry:
 
-- a unique ID, tier, tested claim, and scientific rationale;
+- a unique stable ID, tier, tested claim, and scientific rationale;
 - method, baseline, dataset, preprocessing, and split;
 - primary and secondary metric plus improvement direction;
 - seeds, repetitions, folds, or other uncertainty units;
@@ -81,17 +84,22 @@ the user confirms that file's mode.
 
 ## Write documentation and runnable configs
 
-Create or update `docs/experiments.md` with claims, protocol, both matrix tiers,
-dimensions, run counts, config paths, expected artifacts, ready/blocked status,
-code gaps, assumptions, provenance, and verified validation or execution
-commands. Do not claim that an experiment ran because its config exists.
+Write only to this allowlist:
 
-Write confirmed runnable configs only under:
-
+- `docs/experiments.md`
 - `src/configs/baselines/`
 - `src/configs/proposed/`
 - `src/configs/ablations/`
 - `src/configs/experiments/`
+
+Do not write any other documentation or configuration path. Create or update
+`docs/experiments.md` with claims, protocol, both matrix tiers, dimensions, run
+counts, config paths, expected artifacts, ready/blocked status, code gaps,
+assumptions, provenance, and verified validation or execution commands.
+Preserve accurate existing content and update relevant sections instead of
+appending duplicates. Do not claim that an experiment ran because its config
+exists. Write confirmed runnable configs only under the four config roots in
+the allowlist.
 
 Follow the existing format, schema, inheritance, composition, naming, and path
 conventions. Reuse verified shared config definitions. If no reliable config
@@ -111,6 +119,9 @@ After writing:
 3. Check duplicate IDs plus docs/config dimensions and run count consistency.
 4. Use a documented dry-run or bounded smoke test only when it is explicitly
    safe and does not create a full experiment or unrequested result artifact.
+
+After validation, confirm that no full experiment or unrequested result
+artifacts were produced.
 
 Do not run training, full evaluation, a sweep, or the experiment matrix. Do not
 analyze results. On failure, stop and report the exact file, command, error, and

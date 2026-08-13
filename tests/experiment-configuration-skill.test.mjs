@@ -10,7 +10,7 @@ const CONFIG_ROOTS = [
   'src/configs/experiments/'
 ];
 const MATRIX_FIELDS = [
-  'unique ID', 'tier', 'claim', 'method', 'baseline', 'dataset', 'split',
+  'unique stable ID', 'tier', 'claim', 'method', 'baseline', 'dataset', 'split',
   'metric', 'direction', 'seeds', 'repetitions', 'independent variables',
   'controlled variables', 'config paths', 'expected artifacts',
   'dependencies', 'rationale', 'run count', 'status'
@@ -44,6 +44,10 @@ test('experiments-designing-configurations inspects evidence before asking one q
   assert.ok(inspectAt >= 0 && askAt > inspectAt);
   assert.match(normalized, /Ask one question at a time[^.]*missing or conflicting/i);
   assert.match(normalized, /do not repeat a fixed questionnaire/i);
+  assert.match(
+    normalized,
+    /when offering choices[^.]*scientific trade-offs[^.]*recommendation[^.]*inspected evidence/i
+  );
 });
 
 test('experiments-designing-configurations defines the complete scientific matrix', async () => {
@@ -69,11 +73,31 @@ test('experiments-designing-configurations requires permission, confirmation, an
   assert.match(normalized, /ask[^.]*permission[^.]*before searching the web/i);
   assert.match(normalized, /prefer[^.]*primary[^.]*official/i);
   assert.match(normalized, /title or identifier[^.]*source URL[^.]*decision/i);
+  assert.match(
+    normalized,
+    /web access[^.]*unavailable[^.]*permission[^.]*declined[^.]*decision[^.]*unresolved[^.]*`blocked`/i
+  );
   assert.match(normalized, /write only after[^.]*explicitly confirms/i);
-  assert.equal(text.includes('`docs/experiments.md`'), true);
-  for (const root of CONFIG_ROOTS) assert.equal(text.includes(`\`${root}\``), true, root);
+  const allowlistAt = normalized.indexOf('Write only to this allowlist');
+  const allowlistEnd = normalized.indexOf(
+    'Do not write any other documentation or configuration path',
+    allowlistAt
+  );
+  assert.ok(allowlistAt >= 0 && allowlistEnd > allowlistAt);
+  const allowlist = normalized.slice(allowlistAt, allowlistEnd);
+  assert.equal(allowlist.includes('`docs/experiments.md`'), true);
+  for (const root of CONFIG_ROOTS) assert.equal(allowlist.includes(`\`${root}\``), true, root);
   assert.match(normalized, /follow[^.]*format[^.]*schema[^.]*inheritance[^.]*composition[^.]*naming/i);
   assert.match(normalized, /no reliable config example[^.]*ask[^.]*format/i);
+});
+
+test('experiments-designing-configurations preserves accurate experiment documentation', async () => {
+  const normalized = compact(await loadSkill());
+
+  assert.match(
+    normalized,
+    /preserve accurate existing content[^.]*update relevant sections[^.]*instead of appending duplicates/i
+  );
 });
 
 test('experiments-designing-configurations blocks unsupported work and resolves conflicts per file', async () => {
@@ -98,6 +122,10 @@ test('experiments-designing-configurations validates safely and reports the outc
   }
   assert.match(normalized, /do not run[^.]*training[^.]*full evaluation[^.]*sweep/i);
   assert.match(normalized, /do not analyze[^.]*results/i);
+  assert.match(
+    normalized,
+    /after[^.]*validation[^.]*confirm[^.]*no full experiment[^.]*unrequested result artifacts[^.]*produced/i
+  );
   for (const field of REPORT_FIELDS) assert.match(text, new RegExp(`\\*\\*${field}:\\*\\*`));
   assert.ok(text.split('\n').length < 500);
 });
