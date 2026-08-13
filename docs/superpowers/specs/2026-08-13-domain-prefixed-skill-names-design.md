@@ -1,7 +1,7 @@
 # Domain-Prefixed Skill Names Design
 
 **Date:** 2026-08-13  
-**Status:** Draft for user review
+**Status:** Approved
 
 ## Context
 
@@ -131,7 +131,8 @@ Tests will enforce:
 
 The release gate remains `npm run verify`, followed by `git diff --check` and a
 search of active source for legacy IDs. Any legacy match outside historical
-specs/plans is a migration failure.
+specs/plans and the explicit migration-rejection fixture is a migration
+failure.
 
 ## Non-Goals
 
