@@ -59,6 +59,15 @@ After initialization, the shared research skills support this sequence:
 Ask the coding agent naturally, for example: `Analyze the experiment results in
 results/raw and prepare a paper-ready notebook.`
 
+## Repository documentation
+
+Use `docs-maintaining-repository` to audit `README.md`, `AGENTS.md`, and the
+primary files under `docs/` against the current code, config, tests, workflows,
+and research artifacts. It writes only missing or stale documentation and
+preserves existing agent policies.
+
+Ask naturally: `Update the repository documentation from the current code and configs.`
+
 ## Paper-writing workflow
 
 For a manuscript, use `paper-reading` to establish the source

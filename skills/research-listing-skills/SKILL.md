@@ -12,6 +12,11 @@ Research:
 - `research-listing-skills`: enumerate the installed research skills.
 - `research-initializing-project`: scaffold a reproducible research project.
 
+Docs:
+
+- `docs-maintaining-repository`: audit and synchronize the repository's primary
+  human and agent documentation with implementation evidence.
+
 Paper:
 
 - `paper-reading`: extract evidence and implementation details from a
