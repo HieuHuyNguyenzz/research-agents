@@ -36,7 +36,7 @@ Use the skills in this order when preparing a complete manuscript:
 6. `paper-writing-experimental-results` — report recorded metrics, comparisons,
    ablations, uncertainty, and limitations.
 7. `paper-writing-conclusion` — synthesize supported findings and future work.
-8. `analyzing-experiment-results` — produce or refresh paper-ready tables and
+8. `results-analyzing-experiments` — produce or refresh paper-ready tables and
    figures whenever the result artifacts change.
 9. `paper-reviewing` — inspect the complete paper and repository and
    report submission-readiness findings.

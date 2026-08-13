@@ -11,10 +11,10 @@ const CONTRACTS = {
   'paper-planning-reimplementation': [
     'paper-to-code', 'scope', 'data', 'evaluation', 'tests', 'milestones', 'risks'
   ],
-  'analyzing-experiment-results': [
+  'results-analyzing-experiments': [
     'results', 'metrics', 'baseline', 'repeated', 'uncertainty', 'notebook', 'figures'
   ],
-  'creating-research-notebook': [
+  'notebook-creating-research': [
     'notebook', 'relative paths', 'top-to-bottom', 'optional', 'validate'
   ]
 };

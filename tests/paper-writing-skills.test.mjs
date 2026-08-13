@@ -269,7 +269,7 @@ function assertPaperWritingDiscovery(index, readme) {
   }
   assert.match(index, /writing skills edit their section directly/i);
   assert.match(index, /review only reports findings/i);
-  assert.match(readme, /paper-reading[\s\S]*paper-writing-abstract[\s\S]*paper-writing-introduction[\s\S]*paper-writing-related-work[\s\S]*paper-writing-methodology[\s\S]*paper-writing-experimental-results[\s\S]*paper-writing-conclusion[\s\S]*analyzing-experiment-results[\s\S]*paper-reviewing/i);
+  assert.match(readme, /paper-reading[\s\S]*paper-writing-abstract[\s\S]*paper-writing-introduction[\s\S]*paper-writing-related-work[\s\S]*paper-writing-methodology[\s\S]*paper-writing-experimental-results[\s\S]*paper-writing-conclusion[\s\S]*results-analyzing-experiments[\s\S]*paper-reviewing/i);
   assert.match(readme, /Write the methodology section from the current code and configs\./);
 }
 
@@ -290,7 +290,7 @@ test('paper-writing discovery rejects a missing or reordered workflow writer', (
     'paper-writing-methodology',
     'paper-writing-experimental-results',
     'paper-writing-conclusion',
-    'analyzing-experiment-results',
+    'results-analyzing-experiments',
     'paper-reviewing'
   ].join('\n');
   const example = 'Write the methodology section from the current code and configs.';

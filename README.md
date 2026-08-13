@@ -51,9 +51,9 @@ After initialization, the shared research skills support this sequence:
 
 1. `paper-reading` — build an evidence map from a paper.
 2. `paper-planning-reimplementation` — map the paper to code, data, and tests.
-3. `analyzing-experiment-results` — inspect metrics, runs, baselines, and
+3. `results-analyzing-experiments` — inspect metrics, runs, baselines, and
    ablations under `results/`.
-4. `creating-research-notebook` — produce a rerunnable notebook under
+4. `notebook-creating-research` — produce a rerunnable notebook under
    `results/analysis/`.
 
 Ask the coding agent naturally, for example: `Analyze the experiment results in
@@ -69,7 +69,7 @@ and finish with an independent review:
 2. `paper-writing-abstract`, `paper-writing-introduction`,
    `paper-writing-related-work`, `paper-writing-methodology`,
    `paper-writing-experimental-results`, and `paper-writing-conclusion`
-3. `analyzing-experiment-results`
+3. `results-analyzing-experiments`
 4. `paper-reviewing`
 
 The six writing skills edit their corresponding files under `paper/sections/`

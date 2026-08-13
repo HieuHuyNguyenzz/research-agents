@@ -1,5 +1,5 @@
 ---
-name: analyzing-experiment-results
+name: results-analyzing-experiments
 description: Use when a user asks to inspect experiment results, metrics, logs, benchmarks, ablations, repeated runs, or scientific evaluation artifacts and turn them into evidence for a paper.
 ---
 

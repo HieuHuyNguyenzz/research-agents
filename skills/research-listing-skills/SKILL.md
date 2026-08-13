@@ -35,12 +35,12 @@ Paper:
 
 Results:
 
-- `analyzing-experiment-results`: turn result artifacts into evidence and a
+- `results-analyzing-experiments`: turn result artifacts into evidence and a
   reproducible analysis notebook.
 
 Notebook:
 
-- `creating-research-notebook`: create or improve a rerunnable research
+- `notebook-creating-research`: create or improve a rerunnable research
   notebook.
 
 The writing skills edit their section directly. The review only reports findings

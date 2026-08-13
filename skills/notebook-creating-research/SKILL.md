@@ -1,5 +1,5 @@
 ---
-name: creating-research-notebook
+name: notebook-creating-research
 description: Use when a user asks to create, scaffold, edit, or make reproducible a notebook for research experiments, result analysis, or scientific tutorials.
 ---
 

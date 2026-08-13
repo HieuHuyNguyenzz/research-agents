@@ -10,8 +10,8 @@ const CANONICAL = [
   'research-initializing-project',
   'paper-reading',
   'paper-planning-reimplementation',
-  'analyzing-experiment-results',
-  'creating-research-notebook'
+  'results-analyzing-experiments',
+  'notebook-creating-research'
 ];
 
 test('research skills use canonical action-oriented names', async () => {
