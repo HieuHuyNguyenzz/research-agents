@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 const TARGET_TOOLS = ['apply_patch', 'bash', 'glob', 'grep', 'todowrite', 'webfetch', 'Bash', 'Read', 'Task'];
+const SKILL_NAME_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
 export function parseFrontmatter(markdown) {
   const match = markdown.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
@@ -20,6 +21,15 @@ export function validateSkill(relativePath, markdown) {
   for (const field of ['name', 'description']) {
     if (!parsed.attributes.get(field)) errors.push(`${relativePath}: missing required frontmatter field: ${field}`);
   }
+  const name = parsed.attributes.get('name');
+  if (name) {
+    if (name.length > 64) errors.push(`${relativePath}: name must be at most 64 characters`);
+    if (!SKILL_NAME_PATTERN.test(name)) {
+      errors.push(`${relativePath}: name must match ^[a-z0-9]+(-[a-z0-9]+)*$`);
+    }
+    const parent = path.basename(path.dirname(relativePath));
+    if (name !== parent) errors.push(`${relativePath}: name must match parent directory: ${parent}`);
+  }
   const namedTools = TARGET_TOOLS.filter((tool) => new RegExp(`\\\`${tool}\\\``, 'i').test(parsed.body));
   if (namedTools.length) errors.push(`${relativePath}: shared skills must not name target tools: ${namedTools.join(', ')}`);
   return errors;
@@ -31,7 +41,13 @@ export async function validateSkillTree(rootDir) {
   const errors = [];
   for (const entry of entries.filter((item) => item.isDirectory())) {
     const file = path.join(skillsDir, entry.name, 'SKILL.md');
-    const markdown = await fs.readFile(file, 'utf8');
+    let markdown;
+    try {
+      markdown = await fs.readFile(file, 'utf8');
+    } catch (error) {
+      if (error.code === 'ENOENT') continue;
+      throw error;
+    }
     errors.push(...validateSkill(path.relative(rootDir, file), markdown));
   }
   return errors;
