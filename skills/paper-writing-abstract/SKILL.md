@@ -1,5 +1,5 @@
 ---
-name: writing-paper-abstract
+name: paper-writing-abstract
 description: Use when drafting or revising a research-paper abstract from the available repository and manuscript evidence.
 ---
 

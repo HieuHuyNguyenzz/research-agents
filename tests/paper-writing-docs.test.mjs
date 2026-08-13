@@ -4,13 +4,13 @@ import test from 'node:test';
 
 const GUIDE = 'docs/paper-writing.md';
 const SKILLS = [
-  'writing-paper-abstract',
-  'writing-paper-introduction',
-  'writing-paper-related-work',
-  'writing-paper-methodology',
-  'writing-paper-experimental-results',
-  'writing-paper-conclusion',
-  'reviewing-research-paper',
+  'paper-writing-abstract',
+  'paper-writing-introduction',
+  'paper-writing-related-work',
+  'paper-writing-methodology',
+  'paper-writing-experimental-results',
+  'paper-writing-conclusion',
+  'paper-reviewing',
 ];
 const TARGETS = [
   'paper/sections/abstract.tex',
@@ -27,7 +27,7 @@ test('paper-writing guide documents the complete skill library and outputs', asy
   for (const target of TARGETS) assert.equal(guide.includes(`\`${target}\``), true, target);
   assert.equal(guide.includes('Never invent a result'), true);
   assert.match(guide, /explicitly supplies or\s+requests/);
-  assert.equal(guide.includes('reviewing-research-paper` — inspect'), true);
+  assert.equal(guide.includes('paper-reviewing` — inspect'), true);
   assert.equal(guide.includes('review skill is read-only by default'), true);
 });
 
@@ -43,7 +43,7 @@ test('README and every installation page link the paper-writing guide', async ()
     const text = await fs.readFile(file, 'utf8');
     assert.equal(text.includes('[paper-writing guide](../paper-writing.md)'), true, file);
     assert.match(text, /Write and review a paper/);
-    assert.match(text, /reviewing-research-paper/);
+    assert.match(text, /paper-reviewing/);
     assert.match(text, /existing LaTeX target|structured findings|section writers/i);
   }
 });

@@ -1,5 +1,5 @@
 ---
-name: writing-paper-conclusion
+name: paper-writing-conclusion
 description: Use when drafting or revising a research-paper conclusion from completed manuscript and repository evidence.
 ---
 

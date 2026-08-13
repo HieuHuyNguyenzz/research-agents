@@ -1,5 +1,5 @@
 ---
-name: writing-paper-related-work
+name: paper-writing-related-work
 description: Use when drafting or revising a research-paper related-work section from an existing bibliography and manuscript evidence.
 ---
 

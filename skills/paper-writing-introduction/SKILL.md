@@ -1,12 +1,11 @@
 ---
-name: writing-paper-methodology
-description: Use when drafting or revising a research-paper methodology section from repository code, configurations, and manuscript evidence.
+name: paper-writing-introduction
+description: Use when drafting or revising a research-paper introduction from the available repository and manuscript evidence.
 ---
 
-# Writing Paper Methodology
+# Writing Paper Introduction
 
-Write or revise `paper/sections/methodology.tex` using the implementation as
-the source of truth.
+Write or revise `paper/sections/introduction.tex` to frame the work accurately.
 
 ## Inspect before editing
 
@@ -16,12 +15,12 @@ Inspect the whole repository and the existing target first: project instructions
 
 ## Shared edit contract
 
-- Write directly to `paper/sections/methodology.tex`; create it if absent.
+- Write directly to `paper/sections/introduction.tex`; create it if absent.
 - If the existing manuscript uses a noncanonical included section path, edit
   that path rather than creating a parallel canonical file and report the
   deviation.
 - Preserve unrelated content and surrounding conventions. Update an existing
-  methodology section instead of appending a duplicate.
+  introduction instead of appending a duplicate.
 - Separate observed evidence from interpretation. Mark missing evidence,
   assumptions, and unresolved citations for follow-up; do not invent facts.
 - Use existing citation keys only. A new source is allowed only when the user
@@ -34,14 +33,14 @@ Inspect the whole repository and the existing target first: project instructions
 
 ## Section content
 
-Explain the formulation, assumptions, data flow, model or algorithm, objective,
-training and inference procedure, and implementation details supported by code
-and configs. Flag any mismatch between repository behavior and the paper
-narrative. Do not infer omitted hyperparameters, preprocessing, or algorithmic
-steps.
+Establish the problem's importance and the evidence-supported gap, then state
+the approach at an appropriate level. Give traceable contributions: each must
+map to code, evidence, or an explicitly supplied project claim. End with an
+organization preview. Do not claim novelty, superiority, significance, or
+causality without support.
 
 ## Validate
 
-Confirm the target exists, contains the methodology once, and presents no
+Confirm the target exists, contains the introduction once, and presents no
 missing evidence as fact. Run an available LaTeX or manuscript validation
 command; if none is available, report that compilation could not be run.

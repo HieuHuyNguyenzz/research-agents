@@ -20,5 +20,5 @@ selected source for later review.
 After initialization, follow the [paper-writing guide](../paper-writing.md).
 For example, ask: `Write the methodology from the current code and configs.`
 The section writers update the existing LaTeX target directly and report the
-evidence used; `reviewing-research-paper` reports findings without changing
+evidence used; `paper-reviewing` reports findings without changing
 files unless you request a fix.

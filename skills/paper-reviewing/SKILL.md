@@ -1,5 +1,5 @@
 ---
-name: reviewing-research-paper
+name: paper-reviewing
 description: Use when assessing a completed research manuscript for submission readiness, technical accuracy, reproducibility, or consistency with its supporting repository.
 ---
 

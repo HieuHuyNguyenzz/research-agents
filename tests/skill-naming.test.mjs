@@ -8,8 +8,8 @@ const CANONICAL = [
   'research-using-skills',
   'research-listing-skills',
   'research-initializing-project',
-  'reading-research-paper',
-  'planning-paper-reimplementation',
+  'paper-reading',
+  'paper-planning-reimplementation',
   'analyzing-experiment-results',
   'creating-research-notebook'
 ];

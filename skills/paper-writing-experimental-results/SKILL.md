@@ -1,11 +1,12 @@
 ---
-name: writing-paper-introduction
-description: Use when drafting or revising a research-paper introduction from the available repository and manuscript evidence.
+name: paper-writing-experimental-results
+description: Use when drafting or revising a research-paper experimental-results section from result artifacts and repository evidence.
 ---
 
-# Writing Paper Introduction
+# Writing Paper Experimental Results
 
-Write or revise `paper/sections/introduction.tex` to frame the work accurately.
+Write or revise `paper/sections/experimental-results.tex` from recorded
+experimental evidence.
 
 ## Inspect before editing
 
@@ -15,12 +16,13 @@ Inspect the whole repository and the existing target first: project instructions
 
 ## Shared edit contract
 
-- Write directly to `paper/sections/introduction.tex`; create it if absent.
+- Write directly to `paper/sections/experimental-results.tex`; create it if
+  absent.
 - If the existing manuscript uses a noncanonical included section path, edit
   that path rather than creating a parallel canonical file and report the
   deviation.
-- Preserve unrelated content and surrounding conventions. Update an existing
-  introduction instead of appending a duplicate.
+- Preserve unrelated content and surrounding conventions. Update existing
+  experimental results instead of appending a duplicate.
 - Separate observed evidence from interpretation. Mark missing evidence,
   assumptions, and unresolved citations for follow-up; do not invent facts.
 - Use existing citation keys only. A new source is allowed only when the user
@@ -33,14 +35,13 @@ Inspect the whole repository and the existing target first: project instructions
 
 ## Section content
 
-Establish the problem's importance and the evidence-supported gap, then state
-the approach at an appropriate level. Give traceable contributions: each must
-map to code, evidence, or an explicitly supplied project claim. End with an
-organization preview. Do not claim novelty, superiority, significance, or
-causality without support.
+Describe the protocol, datasets, baselines, metrics, seeds or repetitions, and
+available settings. Report values only from result artifacts and include
+uncertainty only when supported. Clearly distinguish tables and figures from
+their interpretation; do not infer statistical significance or causality.
 
 ## Validate
 
-Confirm the target exists, contains the introduction once, and presents no
+Confirm the target exists, contains experimental results once, and presents no
 missing evidence as fact. Run an available LaTeX or manuscript validation
 command; if none is available, report that compilation could not be run.

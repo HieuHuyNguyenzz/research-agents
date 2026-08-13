@@ -1,12 +1,12 @@
 ---
-name: writing-paper-experimental-results
-description: Use when drafting or revising a research-paper experimental-results section from result artifacts and repository evidence.
+name: paper-writing-methodology
+description: Use when drafting or revising a research-paper methodology section from repository code, configurations, and manuscript evidence.
 ---
 
-# Writing Paper Experimental Results
+# Writing Paper Methodology
 
-Write or revise `paper/sections/experimental-results.tex` from recorded
-experimental evidence.
+Write or revise `paper/sections/methodology.tex` using the implementation as
+the source of truth.
 
 ## Inspect before editing
 
@@ -16,13 +16,12 @@ Inspect the whole repository and the existing target first: project instructions
 
 ## Shared edit contract
 
-- Write directly to `paper/sections/experimental-results.tex`; create it if
-  absent.
+- Write directly to `paper/sections/methodology.tex`; create it if absent.
 - If the existing manuscript uses a noncanonical included section path, edit
   that path rather than creating a parallel canonical file and report the
   deviation.
-- Preserve unrelated content and surrounding conventions. Update existing
-  experimental results instead of appending a duplicate.
+- Preserve unrelated content and surrounding conventions. Update an existing
+  methodology section instead of appending a duplicate.
 - Separate observed evidence from interpretation. Mark missing evidence,
   assumptions, and unresolved citations for follow-up; do not invent facts.
 - Use existing citation keys only. A new source is allowed only when the user
@@ -35,13 +34,14 @@ Inspect the whole repository and the existing target first: project instructions
 
 ## Section content
 
-Describe the protocol, datasets, baselines, metrics, seeds or repetitions, and
-available settings. Report values only from result artifacts and include
-uncertainty only when supported. Clearly distinguish tables and figures from
-their interpretation; do not infer statistical significance or causality.
+Explain the formulation, assumptions, data flow, model or algorithm, objective,
+training and inference procedure, and implementation details supported by code
+and configs. Flag any mismatch between repository behavior and the paper
+narrative. Do not infer omitted hyperparameters, preprocessing, or algorithmic
+steps.
 
 ## Validate
 
-Confirm the target exists, contains experimental results once, and presents no
+Confirm the target exists, contains the methodology once, and presents no
 missing evidence as fact. Run an available LaTeX or manuscript validation
 command; if none is available, report that compilation could not be run.

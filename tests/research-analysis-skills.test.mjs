@@ -5,10 +5,10 @@ import test from 'node:test';
 
 const ROOT = process.cwd();
 const CONTRACTS = {
-  'reading-research-paper': [
+  'paper-reading': [
     'paper', 'PDF', 'evidence', 'page', 'uncertainty', 'reproducibility'
   ],
-  'planning-paper-reimplementation': [
+  'paper-planning-reimplementation': [
     'paper-to-code', 'scope', 'data', 'evaluation', 'tests', 'milestones', 'risks'
   ],
   'analyzing-experiment-results': [

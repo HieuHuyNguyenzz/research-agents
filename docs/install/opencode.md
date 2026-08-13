@@ -20,5 +20,5 @@ selected source for later review.
 After initialization, follow the [paper-writing guide](../paper-writing.md).
 For example, ask: `Review the complete paper and repository for evidence,
 citations, reproducibility, and submission readiness.` The
-`reviewing-research-paper` skill reports structured findings; invoke a section
+`paper-reviewing` skill reports structured findings; invoke a section
 writer afterward when you want an edit.

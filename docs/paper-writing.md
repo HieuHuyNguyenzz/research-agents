@@ -25,20 +25,20 @@ The selected source URL, retrieval time, and SHA-256 digest are recorded in
 
 Use the skills in this order when preparing a complete manuscript:
 
-1. `reading-research-paper` — extract claims, methods, assumptions, and
+1. `paper-reading` — extract claims, methods, assumptions, and
    reproducibility details from the primary paper or project sources.
-2. `writing-paper-abstract` — summarize only the evidence already available.
-3. `writing-paper-introduction` — establish the problem, gap, and contributions.
-4. `writing-paper-related-work` — position the work using the bibliography and
+2. `paper-writing-abstract` — summarize only the evidence already available.
+3. `paper-writing-introduction` — establish the problem, gap, and contributions.
+4. `paper-writing-related-work` — position the work using the bibliography and
    verified sources.
-5. `writing-paper-methodology` — describe the implemented method from code and
+5. `paper-writing-methodology` — describe the implemented method from code and
    configuration.
-6. `writing-paper-experimental-results` — report recorded metrics, comparisons,
+6. `paper-writing-experimental-results` — report recorded metrics, comparisons,
    ablations, uncertainty, and limitations.
-7. `writing-paper-conclusion` — synthesize supported findings and future work.
+7. `paper-writing-conclusion` — synthesize supported findings and future work.
 8. `analyzing-experiment-results` — produce or refresh paper-ready tables and
    figures whenever the result artifacts change.
-9. `reviewing-research-paper` — inspect the complete paper and repository and
+9. `paper-reviewing` — inspect the complete paper and repository and
    report submission-readiness findings.
 
 The order is a recommendation, not a requirement for editing one section. For
@@ -49,13 +49,13 @@ skill when you want a consistency check.
 
 | Skill | Direct output | Primary evidence |
 | --- | --- | --- |
-| `writing-paper-abstract` | `paper/sections/abstract.tex` | paper claims, method, and recorded headline results |
-| `writing-paper-introduction` | `paper/sections/introduction.tex` | problem context, gap, motivation, and contributions |
-| `writing-paper-related-work` | `paper/sections/related-work.tex` | `paper/references.bib` and verified related sources |
-| `writing-paper-methodology` | `paper/sections/methodology.tex` | `src/`, configs, algorithms, and implementation choices |
-| `writing-paper-experimental-results` | `paper/sections/experimental-results.tex` | `results/`, logs, tables, figures, and uncertainty |
-| `writing-paper-conclusion` | `paper/sections/conclusion.tex` | supported findings, limitations, and future work |
-| `reviewing-research-paper` | review report only | the complete `paper/` tree plus the supporting repository |
+| `paper-writing-abstract` | `paper/sections/abstract.tex` | paper claims, method, and recorded headline results |
+| `paper-writing-introduction` | `paper/sections/introduction.tex` | problem context, gap, motivation, and contributions |
+| `paper-writing-related-work` | `paper/sections/related-work.tex` | `paper/references.bib` and verified related sources |
+| `paper-writing-methodology` | `paper/sections/methodology.tex` | `src/`, configs, algorithms, and implementation choices |
+| `paper-writing-experimental-results` | `paper/sections/experimental-results.tex` | `results/`, logs, tables, figures, and uncertainty |
+| `paper-writing-conclusion` | `paper/sections/conclusion.tex` | supported findings, limitations, and future work |
+| `paper-reviewing` | review report only | the complete `paper/` tree plus the supporting repository |
 
 If an initialized project uses a non-canonical `\\input` or `\\include` path,
 the writer edits the existing included target instead of creating a parallel
@@ -132,7 +132,7 @@ Review the complete paper and repository for correctness, evidence, citations, r
 For a revision, name the desired change and its evidence, for example: “Revise
 the methodology to reflect `src/core/optimizer.py`; preserve the current
 notation and update only that section.” After a direct write, inspect the diff
-and ask `reviewing-research-paper` for an independent check.
+and ask `paper-reviewing` for an independent check.
 
 ## Validation checklist
 

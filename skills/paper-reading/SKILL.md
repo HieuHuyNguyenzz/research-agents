@@ -1,5 +1,5 @@
 ---
-name: reading-research-paper
+name: paper-reading
 description: Use when a user provides a research paper, PDF, preprint, DOI, paper URL, supplementary material, or excerpt and needs an evidence-aware technical understanding.
 ---
 
@@ -41,4 +41,4 @@ are available. Ask only for missing information that blocks a reliable answer.
 Provide a concise thesis, method summary, experiment and metric table when
 useful, implementation notes, reproducibility risks, and unresolved questions.
 If the next step is implementation, pass this evidence map to
-`planning-paper-reimplementation` rather than inventing missing details.
+`paper-planning-reimplementation` rather than inventing missing details.

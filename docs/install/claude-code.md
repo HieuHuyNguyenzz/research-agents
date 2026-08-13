@@ -20,5 +20,5 @@ selected source for later review.
 After initialization, follow the [paper-writing guide](../paper-writing.md).
 For example, ask: `Write the experimental results from results/processed and
 results/tables.` The section writers edit the existing LaTeX target and explain
-their evidence; `reviewing-research-paper` produces a report only until you
+their evidence; `paper-reviewing` produces a report only until you
 explicitly request changes.

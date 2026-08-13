@@ -4,38 +4,38 @@ import path from 'node:path';
 import test from 'node:test';
 
 const PAPER_WRITERS = {
-  'writing-paper-abstract': {
+  'paper-writing-abstract': {
     target: 'paper/sections/abstract.tex',
     phrases: ['abstract', 'evidence', 'citation']
   },
-  'writing-paper-introduction': {
+  'paper-writing-introduction': {
     target: 'paper/sections/introduction.tex',
     phrases: ['introduction', 'gap', 'contributions']
   },
-  'writing-paper-related-work': {
+  'paper-writing-related-work': {
     target: 'paper/sections/related-work.tex',
     phrases: ['related work', 'citation', 'bibliography']
   },
-  'writing-paper-methodology': {
+  'paper-writing-methodology': {
     target: 'paper/sections/methodology.tex',
     phrases: ['methodology', 'code', 'algorithm']
   },
-  'writing-paper-experimental-results': {
+  'paper-writing-experimental-results': {
     target: 'paper/sections/experimental-results.tex',
     phrases: ['experimental results', 'metrics', 'uncertainty']
   },
-  'writing-paper-conclusion': {
+  'paper-writing-conclusion': {
     target: 'paper/sections/conclusion.tex',
     phrases: ['conclusion', 'limitations', 'future work']
   }
 };
 
-const REVIEW_SKILL = 'reviewing-research-paper';
+const REVIEW_SKILL = 'paper-reviewing';
 const CITATION_CAPABLE_WRITERS = new Set([
-  'writing-paper-introduction',
-  'writing-paper-related-work',
-  'writing-paper-methodology',
-  'writing-paper-experimental-results'
+  'paper-writing-introduction',
+  'paper-writing-related-work',
+  'paper-writing-methodology',
+  'paper-writing-experimental-results'
 ]);
 const REVIEW_PHRASES = [
     'complete paper', 'correctness', 'completeness', 'coherence', 'venue fit',
@@ -109,16 +109,16 @@ test(`${REVIEW_SKILL} has the review-only contract`, async () => {
 });
 
 function validAbstractSkill(body) {
-  return `---\nname: writing-paper-abstract\ndescription: Use when drafting an abstract.\n---\n\nInspect the whole repository and the existing target first.\n\nWrite directly to \`paper/sections/abstract.tex\`; create it if absent. If the manuscript has a clearly established different section layout, follow that layout instead of creating a duplicate. Preserve existing text when information is missing and do not invent facts. Use existing citation keys only when a citation is necessary.\n\n${body}`;
+  return `---\nname: paper-writing-abstract\ndescription: Use when drafting an abstract.\n---\n\nInspect the whole repository and the existing target first.\n\nWrite directly to \`paper/sections/abstract.tex\`; create it if absent. If the manuscript has a clearly established different section layout, follow that layout instead of creating a duplicate. Preserve existing text when information is missing and do not invent facts. Use existing citation keys only when a citation is necessary.\n\n${body}`;
 }
 
 function validIntroductionSkill(body) {
-  return `---\nname: writing-paper-introduction\ndescription: Use when drafting an introduction.\n---\n\nInspect the whole repository and the existing target first.\n\nWrite directly to \`paper/sections/introduction.tex\`; create it if absent. If the manuscript has a clearly established different section layout, follow that layout instead of creating a duplicate. Preserve existing text when information is missing and do not invent facts. Use existing citation keys only, unless the user explicitly supplies or requests a new source.\n\n${body}`;
+  return `---\nname: paper-writing-introduction\ndescription: Use when drafting an introduction.\n---\n\nInspect the whole repository and the existing target first.\n\nWrite directly to \`paper/sections/introduction.tex\`; create it if absent. If the manuscript has a clearly established different section layout, follow that layout instead of creating a duplicate. Preserve existing text when information is missing and do not invent facts. Use existing citation keys only, unless the user explicitly supplies or requests a new source.\n\n${body}`;
 }
 
 function validReviewSkill(body) {
   return `---
-name: reviewing-research-paper
+name: paper-reviewing
 description: Use when assessing a completed research manuscript before submission.
 ---
 
@@ -142,16 +142,16 @@ test('paper-writing contract rejects a path that differs from the required liter
     'paper/sections/abstract.tex', 'paper/sections/abstractXtex'
   );
   assert.throws(() => assertPaperWritingSkillContract(
-    'writing-paper-abstract', text, PAPER_WRITERS['writing-paper-abstract'].phrases,
-    PAPER_WRITERS['writing-paper-abstract'].target
+    'paper-writing-abstract', text, PAPER_WRITERS['paper-writing-abstract'].phrases,
+    PAPER_WRITERS['paper-writing-abstract'].target
   ));
 });
 
 test('valid writer fixture satisfies the complete writer contract', () => {
   assert.doesNotThrow(() => assertPaperWritingSkillContract(
-    'writing-paper-abstract', validAbstractSkill('Write an abstract with evidence and citation.'),
-    PAPER_WRITERS['writing-paper-abstract'].phrases,
-    PAPER_WRITERS['writing-paper-abstract'].target
+    'paper-writing-abstract', validAbstractSkill('Write an abstract with evidence and citation.'),
+    PAPER_WRITERS['paper-writing-abstract'].phrases,
+    PAPER_WRITERS['paper-writing-abstract'].target
   ));
 });
 
@@ -161,8 +161,8 @@ test('writer contract rejects omitted alternate-layout exception', () => {
     ''
   );
   assert.throws(() => assertPaperWritingSkillContract(
-    'writing-paper-abstract', text, PAPER_WRITERS['writing-paper-abstract'].phrases,
-    PAPER_WRITERS['writing-paper-abstract'].target
+    'paper-writing-abstract', text, PAPER_WRITERS['paper-writing-abstract'].phrases,
+    PAPER_WRITERS['paper-writing-abstract'].target
   ));
 });
 
@@ -172,8 +172,8 @@ test('writer contract rejects omitted explicit user-supplied citation exception'
     ''
   );
   assert.throws(() => assertPaperWritingSkillContract(
-    'writing-paper-introduction', text, PAPER_WRITERS['writing-paper-introduction'].phrases,
-    PAPER_WRITERS['writing-paper-introduction'].target
+    'paper-writing-introduction', text, PAPER_WRITERS['paper-writing-introduction'].phrases,
+    PAPER_WRITERS['paper-writing-introduction'].target
   ));
 });
 
@@ -182,8 +182,8 @@ test('paper-writing contract rejects plain disallowed tool names', () => {
     'Write an abstract with evidence and citation in paper/sections/abstract.tex. Preserve existing text when information is missing. Use apply_patch.'
   );
   assert.throws(() => assertPaperWritingSkillContract(
-    'writing-paper-abstract', text, PAPER_WRITERS['writing-paper-abstract'].phrases,
-    PAPER_WRITERS['writing-paper-abstract'].target
+    'paper-writing-abstract', text, PAPER_WRITERS['paper-writing-abstract'].phrases,
+    PAPER_WRITERS['paper-writing-abstract'].target
   ));
 });
 
@@ -192,8 +192,8 @@ test('paper-writing contract allows ordinary prose that overlaps tool names', ()
     'Write directly to `paper/sections/abstract.tex` with abstract evidence and citation. Read the existing section and complete the task without inventing missing facts.'
   );
   assert.doesNotThrow(() => assertPaperWritingSkillContract(
-    'writing-paper-abstract', text, PAPER_WRITERS['writing-paper-abstract'].phrases,
-    PAPER_WRITERS['writing-paper-abstract'].target
+    'paper-writing-abstract', text, PAPER_WRITERS['paper-writing-abstract'].phrases,
+    PAPER_WRITERS['paper-writing-abstract'].target
   ));
 });
 
@@ -205,8 +205,8 @@ test('paper-writing contract rejects clearly named platform tools', () => {
   ]) {
     const text = validAbstractSkill(body);
     assert.throws(() => assertPaperWritingSkillContract(
-      'writing-paper-abstract', text, PAPER_WRITERS['writing-paper-abstract'].phrases,
-      PAPER_WRITERS['writing-paper-abstract'].target
+      'paper-writing-abstract', text, PAPER_WRITERS['paper-writing-abstract'].phrases,
+      PAPER_WRITERS['paper-writing-abstract'].target
     ));
   }
 });
@@ -269,7 +269,7 @@ function assertPaperWritingDiscovery(index, readme) {
   }
   assert.match(index, /writing skills edit their section directly/i);
   assert.match(index, /review only reports findings/i);
-  assert.match(readme, /reading-research-paper[\s\S]*writing-paper-abstract[\s\S]*writing-paper-introduction[\s\S]*writing-paper-related-work[\s\S]*writing-paper-methodology[\s\S]*writing-paper-experimental-results[\s\S]*writing-paper-conclusion[\s\S]*analyzing-experiment-results[\s\S]*reviewing-research-paper/i);
+  assert.match(readme, /paper-reading[\s\S]*paper-writing-abstract[\s\S]*paper-writing-introduction[\s\S]*paper-writing-related-work[\s\S]*paper-writing-methodology[\s\S]*paper-writing-experimental-results[\s\S]*paper-writing-conclusion[\s\S]*analyzing-experiment-results[\s\S]*paper-reviewing/i);
   assert.match(readme, /Write the methodology section from the current code and configs\./);
 }
 
@@ -283,22 +283,22 @@ test('paper-writing discovery rejects a missing or reordered workflow writer', (
   const index = 'writing skills edit their section directly. The review only reports findings.\n'
     + [...Object.keys(PAPER_WRITERS), REVIEW_SKILL].join('\n');
   const orderedWorkflow = [
-    'reading-research-paper',
-    'writing-paper-abstract',
-    'writing-paper-introduction',
-    'writing-paper-related-work',
-    'writing-paper-methodology',
-    'writing-paper-experimental-results',
-    'writing-paper-conclusion',
+    'paper-reading',
+    'paper-writing-abstract',
+    'paper-writing-introduction',
+    'paper-writing-related-work',
+    'paper-writing-methodology',
+    'paper-writing-experimental-results',
+    'paper-writing-conclusion',
     'analyzing-experiment-results',
-    'reviewing-research-paper'
+    'paper-reviewing'
   ].join('\n');
   const example = 'Write the methodology section from the current code and configs.';
   assert.throws(() => assertPaperWritingDiscovery(index, orderedWorkflow.replace(
-    'writing-paper-methodology\nwriting-paper-experimental-results',
-    'writing-paper-experimental-results\nwriting-paper-methodology'
+    'paper-writing-methodology\npaper-writing-experimental-results',
+    'paper-writing-experimental-results\npaper-writing-methodology'
   ) + example));
   assert.throws(() => assertPaperWritingDiscovery(index, orderedWorkflow.replace(
-    'writing-paper-related-work\n', ''
+    'paper-writing-related-work\n', ''
   ) + example));
 });

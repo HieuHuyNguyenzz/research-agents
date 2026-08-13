@@ -1,5 +1,5 @@
 ---
-name: planning-paper-reimplementation
+name: paper-planning-reimplementation
 description: Use when a user wants to reproduce a research paper in a codebase and needs a concrete implementation, experiment, or validation plan before coding.
 ---
 

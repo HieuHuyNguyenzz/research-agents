@@ -49,8 +49,8 @@ overwrite mode.
 
 After initialization, the shared research skills support this sequence:
 
-1. `reading-research-paper` — build an evidence map from a paper.
-2. `planning-paper-reimplementation` — map the paper to code, data, and tests.
+1. `paper-reading` — build an evidence map from a paper.
+2. `paper-planning-reimplementation` — map the paper to code, data, and tests.
 3. `analyzing-experiment-results` — inspect metrics, runs, baselines, and
    ablations under `results/`.
 4. `creating-research-notebook` — produce a rerunnable notebook under
@@ -61,19 +61,19 @@ results/raw and prepare a paper-ready notebook.`
 
 ## Paper-writing workflow
 
-For a manuscript, use `reading-research-paper` to establish the source
+For a manuscript, use `paper-reading` to establish the source
 evidence, then draft the necessary section(s), analyze the available results,
 and finish with an independent review:
 
-1. `reading-research-paper`
-2. `writing-paper-abstract`, `writing-paper-introduction`,
-   `writing-paper-related-work`, `writing-paper-methodology`,
-   `writing-paper-experimental-results`, and `writing-paper-conclusion`
+1. `paper-reading`
+2. `paper-writing-abstract`, `paper-writing-introduction`,
+   `paper-writing-related-work`, `paper-writing-methodology`,
+   `paper-writing-experimental-results`, and `paper-writing-conclusion`
 3. `analyzing-experiment-results`
-4. `reviewing-research-paper`
+4. `paper-reviewing`
 
 The six writing skills edit their corresponding files under `paper/sections/`
-directly. `reviewing-research-paper` inspects `paper/` and the supporting
+directly. `paper-reviewing` inspects `paper/` and the supporting
 repository, then only reports findings unless you request fixes.
 
 Ask naturally, for example: `Write the methodology section from the current code and configs.`
