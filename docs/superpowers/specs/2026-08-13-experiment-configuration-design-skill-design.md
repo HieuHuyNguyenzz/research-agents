@@ -1,7 +1,7 @@
 # Experiment Configuration Design Skill
 
 **Date:** 2026-08-13  
-**Status:** Approved in conversation; awaiting written-spec review
+**Status:** Approved
 
 ## Goal
 
