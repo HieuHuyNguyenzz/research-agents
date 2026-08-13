@@ -6,6 +6,7 @@ import test from 'node:test';
 const ROOT = process.cwd();
 const CANONICAL = [
   'docs-maintaining-repository',
+  'experiments-designing-configurations',
   'research-using-skills',
   'research-listing-skills',
   'research-initializing-project',

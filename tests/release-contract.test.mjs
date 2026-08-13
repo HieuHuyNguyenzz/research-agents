@@ -46,3 +46,14 @@ test('release includes the repository documentation skill without a version bump
   assert.equal(claude.version, '0.2.0');
   await fs.access('skills/docs-maintaining-repository/SKILL.md');
 });
+
+test('release includes experiment configuration design without a version bump', async () => {
+  const pkg = await json('package.json');
+  const codex = await json('.codex-plugin/plugin.json');
+  const claude = await json('.claude-plugin/plugin.json');
+
+  assert.equal(pkg.version, '0.2.0');
+  assert.equal(codex.version, '0.2.0');
+  assert.equal(claude.version, '0.2.0');
+  await fs.access('skills/experiments-designing-configurations/SKILL.md');
+});
