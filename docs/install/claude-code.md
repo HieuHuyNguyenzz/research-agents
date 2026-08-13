@@ -22,3 +22,14 @@ For example, ask: `Write the experimental results from results/processed and
 results/tables.` The section writers edit the existing LaTeX target and explain
 their evidence; `paper-reviewing` produces a report only until you
 explicitly request changes.
+
+## Migrating from 0.1.0
+
+Update or reinstall `research-agents`, then start a clean session. Do not keep
+old skill directories beside the new domain-prefixed catalog; duplicate
+descriptions make skill discovery ambiguous. Ask the agent to list installed
+research skills and confirm `research-using-skills` and `paper-reviewing`
+before continuing.
+
+This migration does not change the native-support evidence boundary. Consult
+the [compatibility matrix](../compatibility.md) for recorded smoke-test status.

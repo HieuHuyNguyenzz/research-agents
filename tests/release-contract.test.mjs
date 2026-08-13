@@ -11,6 +11,7 @@ test('native manifests use the package version and shared skills path', async ()
   const codex = await json('.codex-plugin/plugin.json');
   const claude = await json('.claude-plugin/plugin.json');
 
+  assert.equal(pkg.version, '0.2.0');
   assert.equal(codex.version, pkg.version);
   assert.equal(claude.version, pkg.version);
   assert.equal(codex.skills, './skills/');

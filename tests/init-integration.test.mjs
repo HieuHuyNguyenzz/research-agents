@@ -95,6 +95,22 @@ test('installation pages describe the initializer request, confirmation, and tem
   }
 });
 
+test('installation pages document the domain-prefixed 0.1.0 migration', async () => {
+  for (const file of [
+    'docs/install/codex.md',
+    'docs/install/claude-code.md',
+    'docs/install/opencode.md',
+  ]) {
+    const text = await fs.readFile(file, 'utf8');
+    assert.match(text, /Migrating from 0\.1\.0/);
+    assert.match(text, /update|reinstall/i);
+    assert.match(text, /clean session/i);
+    assert.match(text, /do not keep[\s\S]*old skill directories/i);
+    assert.match(text, /research-using-skills/);
+    assert.match(text, /paper-reviewing/);
+  }
+});
+
 test('compatibility documentation contains Node portability within the unverified native smoke boundary', async () => {
   const text = await fs.readFile('docs/compatibility.md', 'utf8');
   assert.match(text, /Node\.js 20/i);

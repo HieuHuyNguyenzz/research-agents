@@ -22,3 +22,14 @@ For example, ask: `Write the methodology from the current code and configs.`
 The section writers update the existing LaTeX target directly and report the
 evidence used; `paper-reviewing` reports findings without changing
 files unless you request a fix.
+
+## Migrating from 0.1.0
+
+Update or reinstall `research-agents`, then start a clean session. Do not keep
+old skill directories beside the new domain-prefixed catalog; duplicate
+descriptions make skill discovery ambiguous. Ask the agent to list installed
+research skills and confirm `research-using-skills` and `paper-reviewing`
+before continuing.
+
+This migration does not change the native-support evidence boundary. Consult
+the [compatibility matrix](../compatibility.md) for recorded smoke-test status.
