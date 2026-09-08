@@ -5,6 +5,10 @@ For a local checkout, use Codex's plugin interface to install this repository;
 do not copy skills into a global instructions directory. Start a new session and
 ask the agent to list installed research skills to smoke-test discovery.
 
+After discovery, use the [research workflow guide](../research-workflow.md) for
+the end-to-end sequence and the [skill reference](../skill-reference.md) for
+inputs, outputs, and example requests.
+
 ## Initialize a research project
 
 Ask in natural language: `Initialize a research project.` The agent asks the

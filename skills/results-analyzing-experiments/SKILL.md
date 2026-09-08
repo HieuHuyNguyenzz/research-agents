@@ -1,6 +1,6 @@
 ---
 name: results-analyzing-experiments
-description: Use when a user asks to inspect experiment results, metrics, logs, benchmarks, ablations, repeated runs, or scientific evaluation artifacts and turn them into evidence for a paper.
+description: Use when a user asks to inspect experiment results, metrics, logs, benchmarks, ablations, repeated runs, or scientific evaluation artifacts and turn them into evidence and a reproducible analysis notebook for a paper.
 ---
 
 # Analyzing Experiment Results
@@ -11,8 +11,9 @@ analysis notebook as the default deliverable.
 
 ## Inputs
 
-Inspect `results/raw/`, `results/processed/`, existing analysis files, logs,
-and user-provided notes or manuscript context. Support common tabular and
+Inspect `results/raw/`, `results/processed/`, existing analysis files and
+notebooks, logs, and user-provided notes or manuscript context. Preserve the
+intent of an existing notebook when revising it. Support common tabular and
 structured data such as CSV, TSV, JSON, JSONL, Parquet, XLSX, and text logs.
 
 ## Workflow
@@ -24,10 +25,15 @@ structured data such as CSV, TSV, JSON, JSONL, Parquet, XLSX, and text logs.
    fold, time axis, ablation dimensions, metric direction, and missingness.
 4. Ask only blocking questions about metric meaning, primary outcome, baseline,
    or grouping when they cannot be inferred safely.
-5. Create one rerunnable notebook under `results/analysis/` containing a data
-   audit, assumption log, metric inventory, summary tables, comparisons, and
-   nonredundant figures.
-6. Summarize robust findings, weak evidence, surprising patterns, failure
+5. Create or revise one rerunnable notebook under `results/analysis/`. Keep
+   each code cell focused on one operation and add concise markdown for the
+   objective, assumptions, expected outputs, and interpretation. Include a data
+   audit, metric inventory, summary tables, comparisons, and nonredundant
+   figures.
+6. Execute the notebook from top to bottom when the environment permits.
+   Verify that it does not rely on hidden state, that outputs are visible, and
+   that table and figure labels are readable.
+7. Summarize robust findings, weak evidence, surprising patterns, failure
    cases, and recommended paper tables or figures.
 
 ## Analysis rules
@@ -39,11 +45,16 @@ structured data such as CSV, TSV, JSON, JSONL, Parquet, XLSX, and text logs.
 - Use paper-ready labels, ordering, rounding, captions, and interpretations.
 - Keep figures and tables inside the notebook by default. Export sidecar files
   only when the user requests them.
-- Use relative paths and graceful fallbacks for optional dependencies.
+- Use repository-relative paths, centralize reusable loading and plotting
+  helpers, and provide graceful fallbacks for optional dependencies.
+- Avoid absolute paths, stale variables, hidden state, filler charts, and
+  duplicated code.
 
 ## Deliverable
 
 Return the notebook path and a concise result summary. Include data provenance,
-assumptions, unresolved questions, and the exact files and metrics analyzed.
-If the user asks only for a quick answer, provide the evidence-backed summary
-without creating unnecessary artifacts.
+assumptions, unresolved questions, the exact files and metrics analyzed, and
+the notebook validation result. If execution is not possible, report why and
+give the exact command needed to validate it. If the user asks only for a quick
+answer, provide the evidence-backed summary without creating unnecessary
+artifacts.

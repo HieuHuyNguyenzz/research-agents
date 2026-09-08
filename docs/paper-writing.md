@@ -14,6 +14,8 @@ layout:
 - source code and configuration under `src/`;
 - recorded outputs under `results/` (especially `results/raw/`,
   `results/processed/`, `results/figures/`, and `results/tables/`); and
+- user-provided local literature PDFs or an existing synthesis when the
+  introduction or related-work argument depends on multiple sources; and
 - enough project context in `README.md`, `docs/`, or the conversation to
   identify the research question, method, and intended venue.
 
@@ -27,18 +29,20 @@ Use the skills in this order when preparing a complete manuscript:
 
 1. `paper-reading` — extract claims, methods, assumptions, and
    reproducibility details from the primary paper or project sources.
-2. `paper-writing-abstract` — summarize only the evidence already available.
-3. `paper-writing-introduction` — establish the problem, gap, and contributions.
-4. `paper-writing-related-work` — position the work using the bibliography and
-   verified sources.
-5. `paper-writing-methodology` — describe the implemented method from code and
+2. `literature-synthesizing-evidence` — synthesize the user-scoped local PDF
+   collection before making cross-paper comparisons or research-gap claims.
+3. `paper-writing-methodology` — describe the implemented method from code and
    configuration.
-6. `paper-writing-experimental-results` — report recorded metrics, comparisons,
+4. `results-analyzing-experiments` — audit result artifacts and produce or
+   refresh the rerunnable notebook, paper-ready tables, and figures.
+5. `paper-writing-experimental-results` — report recorded metrics, comparisons,
    ablations, uncertainty, and limitations.
-7. `paper-writing-conclusion` — synthesize supported findings and future work.
-8. `results-analyzing-experiments` — produce or refresh paper-ready tables and
-   figures whenever the result artifacts change.
-9. `paper-reviewing` — inspect the complete paper and repository and
+6. `paper-writing-related-work` — position the work using the bibliography and
+   verified sources.
+7. `paper-writing-introduction` — establish the problem, gap, and contributions.
+8. `paper-writing-conclusion` — synthesize supported findings and future work.
+9. `paper-writing-abstract` — summarize the stable manuscript evidence last.
+10. `paper-reviewing` — inspect the complete paper and repository and
    report submission-readiness findings.
 
 The order is a recommendation, not a requirement for editing one section. For
@@ -49,6 +53,8 @@ skill when you want a consistency check.
 
 | Skill | Direct output | Primary evidence |
 | --- | --- | --- |
+| `literature-synthesizing-evidence` | `literature/synthesis.md` or an in-conversation report | user-scoped local PDF files and per-paper evidence maps |
+| `results-analyzing-experiments` | one rerunnable notebook under `results/analysis/` by default | recorded metrics, logs, configs, baselines, ablations, and repeated runs |
 | `paper-writing-abstract` | `paper/sections/abstract.tex` | paper claims, method, and recorded headline results |
 | `paper-writing-introduction` | `paper/sections/introduction.tex` | problem context, gap, motivation, and contributions |
 | `paper-writing-related-work` | `paper/sections/related-work.tex` | `paper/references.bib` and verified related sources |
@@ -96,6 +102,10 @@ Experimental numbers must come from recorded artifacts. Prefer the existing
 analysis outputs and cite the corresponding table, figure, log, or notebook;
 do not infer a metric from an image or memory when the underlying artifact is
 unavailable.
+
+For the stages before manuscript writing, including study design, literature
+synthesis, implementation handoff, experiment configuration, and external
+workstation execution, see the [research workflow guide](research-workflow.md).
 
 ## Example requests
 

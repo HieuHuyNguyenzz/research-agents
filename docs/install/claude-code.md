@@ -5,6 +5,10 @@ installer. The bundled `SessionStart` hook loads the bootstrap on startup,
 clear, and compact events. Do not edit personal `CLAUDE.md` files. Start a new
 session and ask the agent to list installed research skills.
 
+After discovery, use the [research workflow guide](../research-workflow.md) for
+the end-to-end sequence and the [skill reference](../skill-reference.md) for
+inputs, outputs, and example requests.
+
 ## Initialize a research project
 
 Ask in natural language: `Initialize a research project.` The agent asks the

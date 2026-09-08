@@ -7,8 +7,9 @@ const ROOT = process.cwd();
 const CANONICAL = [
   'docs-maintaining-repository',
   'experiments-designing-configurations',
+  'literature-synthesizing-evidence',
+  'research-designing-study',
   'research-using-skills',
-  'research-listing-skills',
   'research-initializing-project',
   'paper-reading',
   'paper-planning-reimplementation',
@@ -19,12 +20,10 @@ const CANONICAL = [
   'paper-writing-experimental-results',
   'paper-writing-conclusion',
   'paper-reviewing',
-  'results-analyzing-experiments',
-  'notebook-creating-research'
+  'results-analyzing-experiments'
 ];
 const LEGACY = [
   'using-research-skills',
-  'listing-research-skills',
   'initializing-research-project',
   'reading-research-paper',
   'planning-paper-reimplementation',

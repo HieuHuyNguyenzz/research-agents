@@ -9,13 +9,13 @@ const CONTRACTS = {
     'paper', 'PDF', 'evidence', 'page', 'uncertainty', 'reproducibility'
   ],
   'paper-planning-reimplementation': [
-    'paper-to-code', 'scope', 'data', 'evaluation', 'tests', 'milestones', 'risks'
+    'research implementation brief', 'paper-to-repository', 'scope', 'fidelity',
+    'scientific contract', 'assumptions', 'deviations', 'acceptance criteria',
+    'Superpowers', 'handoff'
   ],
   'results-analyzing-experiments': [
-    'results', 'metrics', 'baseline', 'repeated', 'uncertainty', 'notebook', 'figures'
-  ],
-  'notebook-creating-research': [
-    'notebook', 'relative paths', 'top-to-bottom', 'optional', 'validate'
+    'results', 'metrics', 'baseline', 'repeated', 'uncertainty', 'notebook',
+    'figures', 'relative paths', 'top to bottom', 'optional', 'validation'
   ]
 };
 
@@ -28,6 +28,33 @@ function parseFrontmatter(text) {
   }));
   return fields;
 }
+
+test('paper reimplementation planning complements the engineering workflow', async () => {
+  const file = path.join(ROOT, 'skills', 'paper-planning-reimplementation', 'SKILL.md');
+  const text = await fs.readFile(file, 'utf8');
+
+  assert.match(text, /inspect existing `superpowers\/specs\/`[\s\S]*`superpowers\/plans\/`[\s\S]*`superpowers\/decisions\/`/i);
+  assert.match(text, /upstream evidence for Superpowers/i);
+  assert.match(text, /engineering design, task decomposition[\s\S]*implementation[\s\S]*test execution[\s\S]*review/i);
+  assert.match(text, /do not create a second coding plan/i);
+  assert.match(text, /do not implement code in this skill/i);
+  assert.match(text, /leave the[\s\S]*experiment matrix[\s\S]*`experiments-designing-configurations`/i);
+  assert.doesNotMatch(text, /Each milestone must include/i);
+});
+
+test('result analysis owns the reproducible notebook contract', async () => {
+  const file = path.join(ROOT, 'skills', 'results-analyzing-experiments', 'SKILL.md');
+  const text = await fs.readFile(file, 'utf8');
+
+  assert.match(text, /create or revise one rerunnable notebook/i);
+  assert.match(text, /each code cell focused on one operation/i);
+  assert.match(text, /objective, assumptions, expected outputs, and interpretation/i);
+  assert.match(text, /execute the notebook from top to bottom/i);
+  assert.match(text, /does not rely on hidden state/i);
+  assert.match(text, /repository-relative paths/i);
+  assert.match(text, /notebook validation result/i);
+  assert.match(text, /quick\s+answer[\s\S]*without creating unnecessary\s+artifacts/i);
+});
 
 for (const [name, phrases] of Object.entries(CONTRACTS)) {
   test(`${name} has the normalized portable contract`, async () => {
@@ -43,11 +70,9 @@ for (const [name, phrases] of Object.entries(CONTRACTS)) {
   });
 }
 
-test('library index and README discover the research analysis workflow', async () => {
-  const index = await fs.readFile(path.join(ROOT, 'skills', 'research-listing-skills', 'SKILL.md'), 'utf8');
+test('README discovers the research analysis workflow', async () => {
   const readme = await fs.readFile(path.join(ROOT, 'README.md'), 'utf8');
   for (const name of Object.keys(CONTRACTS)) {
-    assert.match(index, new RegExp(name));
     assert.match(readme, new RegExp(name));
   }
   assert.match(readme, /results\/analysis/);

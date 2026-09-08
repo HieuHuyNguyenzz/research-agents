@@ -130,14 +130,8 @@ test('experiments-designing-configurations validates safely and reports the outc
   assert.ok(text.split('\n').length < 500);
 });
 
-test('catalog and README expose experiment design before result analysis', async () => {
-  const [catalog, readme] = await Promise.all([
-    fs.readFile('skills/research-listing-skills/SKILL.md', 'utf8'),
-    fs.readFile('README.md', 'utf8')
-  ]);
-
-  assert.match(catalog, /Experiments:[\s\S]*`experiments-designing-configurations`/);
-  assert.match(catalog, /matrix|configurations/i);
+test('README exposes experiment design before result analysis', async () => {
+  const readme = await fs.readFile('README.md', 'utf8');
 
   const workflow = readme.match(/## Research workflow\n([\s\S]*?)\n## Repository documentation/);
   assert.ok(workflow, 'README must contain a bounded research workflow section');

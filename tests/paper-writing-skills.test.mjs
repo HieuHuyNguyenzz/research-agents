@@ -262,43 +262,38 @@ test('review contract rejects platform-tool references', () => {
   ));
 });
 
-function assertPaperWritingDiscovery(index, readme) {
+function assertPaperWritingDiscovery(readme) {
   for (const name of [...Object.keys(PAPER_WRITERS), REVIEW_SKILL]) {
-    assert.match(index, new RegExp(name));
     assert.match(readme, new RegExp(name));
   }
-  assert.match(index, /writing skills edit their section directly/i);
-  assert.match(index, /review only reports findings/i);
-  assert.match(readme, /paper-reading[\s\S]*paper-writing-abstract[\s\S]*paper-writing-introduction[\s\S]*paper-writing-related-work[\s\S]*paper-writing-methodology[\s\S]*paper-writing-experimental-results[\s\S]*paper-writing-conclusion[\s\S]*results-analyzing-experiments[\s\S]*paper-reviewing/i);
+  assert.match(readme, /paper-reading[\s\S]*paper-writing-methodology[\s\S]*results-analyzing-experiments[\s\S]*paper-writing-experimental-results[\s\S]*paper-writing-related-work[\s\S]*paper-writing-introduction[\s\S]*paper-writing-conclusion[\s\S]*paper-writing-abstract[\s\S]*paper-reviewing/i);
   assert.match(readme, /Write the methodology section from the current code and configs\./);
 }
 
 test('paper-writing skills are discoverable in the library and README', async () => {
-  const index = await fs.readFile('skills/research-listing-skills/SKILL.md', 'utf8');
   const readme = await fs.readFile('README.md', 'utf8');
-  assertPaperWritingDiscovery(index, readme);
+  assertPaperWritingDiscovery(readme);
 });
 
 test('paper-writing discovery rejects a missing or reordered workflow writer', () => {
-  const index = 'writing skills edit their section directly. The review only reports findings.\n'
-    + [...Object.keys(PAPER_WRITERS), REVIEW_SKILL].join('\n');
   const orderedWorkflow = [
     'paper-reading',
-    'paper-writing-abstract',
-    'paper-writing-introduction',
-    'paper-writing-related-work',
     'paper-writing-methodology',
-    'paper-writing-experimental-results',
-    'paper-writing-conclusion',
     'results-analyzing-experiments',
+    'paper-writing-experimental-results',
+    'paper-writing-related-work',
+    'paper-writing-introduction',
+    'paper-writing-conclusion',
+    'paper-writing-abstract',
     'paper-reviewing'
   ].join('\n');
   const example = 'Write the methodology section from the current code and configs.';
-  assert.throws(() => assertPaperWritingDiscovery(index, orderedWorkflow.replace(
-    'paper-writing-methodology\npaper-writing-experimental-results',
-    'paper-writing-experimental-results\npaper-writing-methodology'
+  assert.doesNotThrow(() => assertPaperWritingDiscovery(`${orderedWorkflow}\n${example}`));
+  assert.throws(() => assertPaperWritingDiscovery(orderedWorkflow.replace(
+    'results-analyzing-experiments\npaper-writing-experimental-results',
+    'paper-writing-experimental-results\nresults-analyzing-experiments'
   ) + example));
-  assert.throws(() => assertPaperWritingDiscovery(index, orderedWorkflow.replace(
+  assert.throws(() => assertPaperWritingDiscovery(orderedWorkflow.replace(
     'paper-writing-related-work\n', ''
   ) + example));
 });

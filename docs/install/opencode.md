@@ -5,6 +5,10 @@ package mechanism. The bundled plugin registers its own skills path at runtime;
 do not add `skills.paths` or manually copy a plugin into global configuration.
 Restart OpenCode and ask the agent to list installed research skills.
 
+After discovery, use the [research workflow guide](../research-workflow.md) for
+the end-to-end sequence and the [skill reference](../skill-reference.md) for
+inputs, outputs, and example requests.
+
 ## Initialize a research project
 
 Ask in natural language: `Initialize a research project.` The agent asks the

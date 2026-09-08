@@ -66,13 +66,8 @@ test('docs-maintaining-repository reports the complete audit outcome', async () 
   assert.ok(text.split('\n').length < 500);
 });
 
-test('catalog and README expose repository documentation maintenance', async () => {
-  const [catalog, readme] = await Promise.all([
-    fs.readFile('skills/research-listing-skills/SKILL.md', 'utf8'),
-    fs.readFile('README.md', 'utf8')
-  ]);
-  assert.match(catalog, /Docs:[\s\S]*`docs-maintaining-repository`/);
-  assert.match(catalog, /audit|synchroniz|maintain/i);
+test('README exposes repository documentation maintenance', async () => {
+  const readme = await fs.readFile('README.md', 'utf8');
   assert.match(readme, /`docs-maintaining-repository`/);
   assert.match(readme, /README\.md[\s\S]*AGENTS\.md[\s\S]*docs\//i);
   assert.match(readme, /Update the repository documentation from the current code and configs\./);
