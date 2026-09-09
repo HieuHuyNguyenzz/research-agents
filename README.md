@@ -302,3 +302,6 @@ suite, and exercises the optional initializer CLI integration contract.
 `research-agents` is at version `0.2.0` and remains under active development.
 The package manifests declare the MIT license. Native compatibility claims are
 intentionally conservative until clean-session smoke evidence is recorded.
+For the full research-to-implementation workflow, also install the companion
+[Superpowers plugin](docs/install/superpowers.md). It is maintained upstream
+and must be installed separately for each coding agent.
