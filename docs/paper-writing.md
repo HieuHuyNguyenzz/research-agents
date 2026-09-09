@@ -10,7 +10,8 @@ every claim can be traced back to evidence.
 Initialize the project first, or make sure the repository has the equivalent
 layout:
 
-- `paper/main.tex`, `paper/sections/`, and `paper/references.bib`;
+- `paper/main.tex`, its reachable files under `paper/sections/`, and
+  `paper/references.bib`;
 - source code and configuration under `src/`;
 - recorded outputs under `results/` (especially `results/raw/`,
   `results/processed/`, `results/figures/`, and `results/tables/`); and
@@ -41,7 +42,8 @@ Use the skills in this order when preparing a complete manuscript:
    verified sources.
 7. `paper-writing-introduction` — establish the problem, gap, and contributions.
 8. `paper-writing-conclusion` — synthesize supported findings and future work.
-9. `paper-writing-abstract` — summarize the stable manuscript evidence last.
+9. `paper-writing-abstract` — use preliminary mode as an optional research map;
+   use final mode to summarize stable manuscript evidence last.
 10. `paper-reviewing` — inspect the complete paper and repository and
    report submission-readiness findings.
 
@@ -53,9 +55,9 @@ skill when you want a consistency check.
 
 | Skill | Direct output | Primary evidence |
 | --- | --- | --- |
-| `literature-synthesizing-evidence` | `literature/synthesis.md` or an in-conversation report | user-scoped local PDF files and per-paper evidence maps |
+| `literature-synthesizing-evidence` | `docs/notes/literature-synthesis.md` or an in-conversation report | user-scoped local PDF files and per-paper evidence maps |
 | `results-analyzing-experiments` | one rerunnable notebook under `results/analysis/` by default | recorded metrics, logs, configs, baselines, ablations, and repeated runs |
-| `paper-writing-abstract` | `paper/sections/abstract.tex` | paper claims, method, and recorded headline results |
+| `paper-writing-abstract` | `paper/sections/abstract.tex` | preliminary research map or final paper claims, method, and recorded headline results |
 | `paper-writing-introduction` | `paper/sections/introduction.tex` | problem context, gap, motivation, and contributions |
 | `paper-writing-related-work` | `paper/sections/related-work.tex` | `paper/references.bib` and verified related sources |
 | `paper-writing-methodology` | `paper/sections/methodology.tex` | `src/`, configs, algorithms, and implementation choices |
@@ -63,9 +65,10 @@ skill when you want a consistency check.
 | `paper-writing-conclusion` | `paper/sections/conclusion.tex` | supported findings, limitations, and future work |
 | `paper-reviewing` | review report only | the complete `paper/` tree plus the supporting repository |
 
-If an initialized project uses a non-canonical `\\input` or `\\include` path,
-the writer edits the existing included target instead of creating a parallel
-section. The response identifies the actual file changed.
+The initializer connects all six canonical section files to `paper/main.tex`.
+If another manuscript uses a non-canonical include or keeps a section inline,
+the writer edits that reachable target instead of creating a parallel section.
+The response identifies the actual file changed.
 
 ## Direct-write rules
 
@@ -73,6 +76,7 @@ The six writer skills inspect the complete repository and the existing target
 before editing. They then:
 
 - preserve unrelated content, formatting, labels, and citations;
+- trace the include graph from `paper/main.tex` and refuse unreachable output;
 - update or replace the relevant section instead of blindly appending a second
   draft;
 - write only to the section requested (and closely related generated artifacts
@@ -113,6 +117,11 @@ Use natural language; the skill name does not need to be mentioned explicitly.
 
 ```text
 Write the abstract from the current paper, implementation, and recorded results.
+```
+
+```text
+Create a preliminary abstract as a research map. The study is not implemented yet;
+label expected results as provisional and identify the open risks.
 ```
 
 ```text

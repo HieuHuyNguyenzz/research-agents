@@ -50,6 +50,8 @@ test('research-designing-study produces a complete confirmed brief', async () =>
     'scientific acceptance criteria',
     'handoff notes'
   ]) assert.match(text, new RegExp(phrase, 'i'));
+  assert.match(text, /`superpowers\/specs\/study-design\.md`/i);
+  assert.match(text, /do not create a partial scaffold/i);
 });
 
 test('research-designing-study hands off without owning downstream work', async () => {

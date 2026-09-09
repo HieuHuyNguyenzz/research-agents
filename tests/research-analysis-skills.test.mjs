@@ -52,8 +52,17 @@ test('result analysis owns the reproducible notebook contract', async () => {
   assert.match(text, /execute the notebook from top to bottom/i);
   assert.match(text, /does not rely on hidden state/i);
   assert.match(text, /repository-relative paths/i);
+  assert.match(text, /`results\/figures\/` for figures/i);
+  assert.match(text, /`results\/tables\/` for tables/i);
   assert.match(text, /notebook validation result/i);
   assert.match(text, /quick\s+answer[\s\S]*without creating unnecessary\s+artifacts/i);
+});
+
+test('paper evidence and reimplementation briefs stay inside the initialized scaffold', async () => {
+  const reading = await fs.readFile(path.join(ROOT, 'skills', 'paper-reading', 'SKILL.md'), 'utf8');
+  const planning = await fs.readFile(path.join(ROOT, 'skills', 'paper-planning-reimplementation', 'SKILL.md'), 'utf8');
+  assert.match(reading, /`docs\/notes\/paper-evidence-map\.md`/i);
+  assert.match(planning, /canonical `superpowers\/specs\/` root/i);
 });
 
 for (const [name, phrases] of Object.entries(CONTRACTS)) {

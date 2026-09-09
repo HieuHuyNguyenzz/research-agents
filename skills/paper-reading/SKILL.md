@@ -40,5 +40,9 @@ are available. Ask only for missing information that blocks a reliable answer.
 
 Provide a concise thesis, method summary, experiment and metric table when
 useful, implementation notes, reproducibility risks, and unresolved questions.
+Return it directly by default. When the user requests persistence in an
+initialized research repository, write or update
+`docs/notes/paper-evidence-map.md`, or an existing clearly named evidence-map
+file inside `docs/notes/`; do not create another top-level paper-notes tree.
 If the next step is implementation, pass this evidence map to
 `paper-planning-reimplementation` rather than inventing missing details.

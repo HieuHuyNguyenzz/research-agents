@@ -35,8 +35,10 @@ test('verify contract includes the init skill and CLI entry point', async () => 
   assert.equal(await exists('scripts/init-project.mjs'), true);
 });
 
-test('initializer skill invokes the portable CLI without global-agent configuration instructions', async () => {
+test('initializer skill supports runtime-free execution and an optional portable CLI', async () => {
   const skill = await fs.readFile('skills/research-initializing-project/SKILL.md', 'utf8');
+  assert.match(skill, /do\s+not require an external language runtime/i);
+  assert.match(skill, /CLI as optional/i);
   assert.match(skill, /node <skill-directory>\/scripts\/init-project\.mjs --root <target-directory> --manifest <manifest\.json> --conflicts abort/);
   assert.doesNotMatch(skill, /global.*(AGENTS|CLAUDE|opencode)/i);
 });
@@ -137,6 +139,11 @@ test('compatibility rows require native smoke evidence before reporting Full sup
     assert.equal(row.length, header.length);
     if (status === 'Full') {
       assert.equal(hasCompleteFullEvidence(row), true);
+    } else if (status === 'Local smoke passed (release pending)') {
+      assert.equal([version, date, command, evidence].every((value) => (
+        typeof value === 'string' && value.trim() && !placeholder.test(value)
+      )), true);
+      assert.match(result, /^(PASS|Passed)$/);
     } else {
       assert.equal(status, 'Unverified (pending recorded smoke test)');
       assert.match(version, placeholder);

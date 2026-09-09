@@ -23,29 +23,50 @@ Normalize the answers into this manifest shape: `projectName`, `overview`,
 `ieee-conference` or `ieee-journal` for `paperTemplate`.
 
 Before creating anything, show a complete summary of every manifest field, the
-normalized paper-template identifier, and the planned scaffold. Ask the user to
-confirm the summary. Do not invoke the initializer until the user explicitly
-confirms.
+normalized paper-template identifier, and this planned scaffold:
 
-Create a temporary JSON file containing the confirmed manifest, then invoke the
-portable initializer with Node:
+```text
+src/core/
+src/configs/{baselines,proposed,ablations,experiments}/
+src/{data,scripts}/
+tests/
+results/{raw,processed,figures,tables,analysis}/
+paper/{sections,figures,tables,templates}/
+docs/notes/
+superpowers/{specs,plans,decisions}/
+README.md, AGENTS.md, .gitignore, pyproject.toml
+```
 
-`node <skill-directory>/scripts/init-project.mjs --root <target-directory> --manifest <manifest.json> --conflicts abort`
+Also create `paper/main.tex`, `paper/references.bib`, `paper/TEMPLATE.md`, all
+six canonical files under `paper/sections/`, and `docs/architecture.md`,
+`docs/methodology.md`, `docs/experiments.md`, and `docs/reproduction.md`.
+Ensure `paper/main.tex` includes every canonical section in manuscript order.
+Create placeholder files only for directories that remain empty. Ask the user
+to confirm the summary. Do not write until the user explicitly confirms.
 
-Resolve `<skill-directory>` to the directory containing this `SKILL.md`; do not
-assume the current working directory is the source repository. Report the
-result, including created, unchanged, skipped, and conflicting paths. If it
-reports a conflict, show the complete conflict list and ask the user which mode
-to use:
+Use the coding agent's built-in file and network capabilities by default; do
+not require an external language runtime. Inspect every target and its
+ancestors before writing. Classify paths as created, unchanged, or conflicting,
+and show the complete conflict list before choosing a conflict mode:
 
 - `abort` stops without writing when conflicts exist.
 - `skip` preserves conflicting paths and creates only non-conflicting paths.
 - `overwrite` replaces conflicting paths only after the user explicitly
   confirms that exact conflict list.
 
-After the user selects a mode, invoke the same Node command with that mode. Do
-not use `overwrite` unless the user explicitly confirmed the conflicts. Never
-delete unrelated paths.
+Do not use `overwrite` unless the user explicitly confirmed the exact conflict
+list. Never delete unrelated paths. Apply paper files as one bundle so a failed
+template operation does not leave a partial paper setup. Report all created,
+unchanged, skipped, and conflicting paths.
+
+If the user explicitly requests the deterministic CLI and Node.js 20+ is
+available, create a temporary JSON manifest and run:
+
+`node <skill-directory>/scripts/init-project.mjs --root <target-directory> --manifest <manifest.json> --conflicts abort`
+
+Resolve `<skill-directory>` relative to this `SKILL.md`, not the current working
+directory. Treat this CLI as optional; absence of Node.js is not a blocker for
+agent-native initialization.
 
 If the initializer reports a network, download, archive, checksum, or template
 validation error, surface the error and stop. Do not silently substitute a

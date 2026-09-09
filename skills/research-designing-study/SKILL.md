@@ -72,9 +72,12 @@ Produce a study design brief containing:
     criteria; and
 11. handoff notes.
 
-If the repository has an established research-spec convention and the user
-requested a written artifact, use that convention. Otherwise return the brief
-directly. Never overwrite or silently duplicate an existing study design.
+If the user requests a persisted artifact in an initialized research repository,
+write or update `superpowers/specs/study-design.md` unless an established file
+inside `superpowers/specs/` already owns the study design. Before project
+initialization, return the brief directly and pass its confirmed fields to
+`research-initializing-project`; do not create a partial scaffold. Never
+overwrite or silently duplicate an existing study design.
 
 For a new project, pass the confirmed brief to `research-initializing-project`.
 When an engineering workflow such as Superpowers is available, pass the brief

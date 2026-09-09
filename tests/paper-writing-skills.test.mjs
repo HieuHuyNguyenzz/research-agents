@@ -72,14 +72,16 @@ function assertPaperWritingSkillContract(name, text, phrases, target) {
   }
   if (target) {
     const escapedTarget = target.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    assert.match(text, new RegExp(`write directly to\\s+\\\`${escapedTarget}\\\``, 'i'));
+    assert.match(text, new RegExp(`write directly\\s+to\\s+\\\`${escapedTarget}\\\``, 'i'));
   }
   assert.match(text, /direct|write/i);
   assert.match(text, /preserv|existing/i);
   assert.match(text, /missing|do not invent|must not/i);
   if (target) {
     assert.match(text, /whole repository|entire repository/i);
-    assert.match(text, /different (?:section )?layout|alternate (?:section )?layout|noncanonical included section path/i);
+    assert.match(text, /different (?:section )?layout|alternate (?:section )?layout|noncanonical included (?:section path|file)/i);
+    assert.match(text, /include graph from `paper\/main\.tex`/i);
+    assert.match(text, /do not create or update an unreachable parallel section file/i);
     if (CITATION_CAPABLE_WRITERS.has(name)) {
       assert.match(text, /user\s+explicitly\s+(?:supplies|provides|requests)[\s\S]{0,120}?(?:new\s+)?(?:citation|source)|(?:new\s+)?(?:citation|source)[\s\S]{0,120}?user\s+explicitly\s+(?:supplies|provides|requests)/i);
     }
@@ -109,11 +111,11 @@ test(`${REVIEW_SKILL} has the review-only contract`, async () => {
 });
 
 function validAbstractSkill(body) {
-  return `---\nname: paper-writing-abstract\ndescription: Use when drafting an abstract.\n---\n\nInspect the whole repository and the existing target first.\n\nWrite directly to \`paper/sections/abstract.tex\`; create it if absent. If the manuscript has a clearly established different section layout, follow that layout instead of creating a duplicate. Preserve existing text when information is missing and do not invent facts. Use existing citation keys only when a citation is necessary.\n\n${body}`;
+  return `---\nname: paper-writing-abstract\ndescription: Use when drafting an abstract.\n---\n\nInspect the whole repository and the existing target first.\n\nTrace the include graph from \`paper/main.tex\`. Write directly to \`paper/sections/abstract.tex\`; create it if absent. If the manuscript has a clearly established noncanonical included file, follow that layout instead of creating a duplicate. Do not create or update an unreachable parallel section file. Preserve existing text when information is missing and do not invent facts. Use existing citation keys only when a citation is necessary.\n\n${body}`;
 }
 
 function validIntroductionSkill(body) {
-  return `---\nname: paper-writing-introduction\ndescription: Use when drafting an introduction.\n---\n\nInspect the whole repository and the existing target first.\n\nWrite directly to \`paper/sections/introduction.tex\`; create it if absent. If the manuscript has a clearly established different section layout, follow that layout instead of creating a duplicate. Preserve existing text when information is missing and do not invent facts. Use existing citation keys only, unless the user explicitly supplies or requests a new source.\n\n${body}`;
+  return `---\nname: paper-writing-introduction\ndescription: Use when drafting an introduction.\n---\n\nInspect the whole repository and the existing target first.\n\nTrace the include graph from \`paper/main.tex\`. Write directly to \`paper/sections/introduction.tex\`; create it if absent. If the manuscript has a clearly established noncanonical included file, follow that layout instead of creating a duplicate. Do not create or update an unreachable parallel section file. Preserve existing text when information is missing and do not invent facts. Use existing citation keys only, unless the user explicitly supplies or requests a new source.\n\n${body}`;
 }
 
 function validReviewSkill(body) {
@@ -155,9 +157,23 @@ test('valid writer fixture satisfies the complete writer contract', () => {
   ));
 });
 
+test('abstract skill supports preliminary and final modes with MRCI and audience checks', async () => {
+  const text = await fs.readFile('skills/paper-writing-abstract/SKILL.md', 'utf8');
+  for (const phrase of [
+    'preliminary', 'final mode', 'research map', 'MRCI', 'Motivation',
+    'Results', 'Contributions', 'Implications', 'intended audience',
+    'target venue', 'word limit', 'So what?'
+  ]) {
+    const pattern = phrase.replace(/[?]/g, '\\$&').replace(/\s+/g, '\\s+');
+    assert.match(text, new RegExp(pattern, 'i'), `missing abstract guidance: ${phrase}`);
+  }
+  assert.match(text, /planned\s+or\s+expected\s+findings\s+as\s+observed\s+results/i);
+  assert.match(text, /imitate their communication style, not their content/i);
+});
+
 test('writer contract rejects omitted alternate-layout exception', () => {
   const text = validAbstractSkill('Write an abstract with evidence and citation.').replace(
-    ' If the manuscript has a clearly established different section layout, follow that layout instead of creating a duplicate.',
+    ' If the manuscript has a clearly established noncanonical included file, follow that layout instead of creating a duplicate.',
     ''
   );
   assert.throws(() => assertPaperWritingSkillContract(

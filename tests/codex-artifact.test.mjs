@@ -9,3 +9,10 @@ test('Codex manifest exposes the shared skills without foreign hooks', async () 
   assert.equal(manifest.skills, './skills/');
   assert.deepEqual(manifest.hooks, {});
 });
+
+test('Codex repository exposes a local marketplace entry for installation', async () => {
+  const marketplace = JSON.parse(await fs.readFile('.agents/plugins/marketplace.json', 'utf8'));
+  assert.equal(marketplace.name, 'research-agents');
+  assert.equal(marketplace.plugins[0].name, 'research-agents');
+  assert.equal(marketplace.plugins[0].source.path, '.');
+});

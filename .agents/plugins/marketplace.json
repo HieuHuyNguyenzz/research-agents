@@ -1,0 +1,20 @@
+{
+  "name": "research-agents",
+  "interface": {
+    "displayName": "Research Agents"
+  },
+  "plugins": [
+    {
+      "name": "research-agents",
+      "source": {
+        "source": "local",
+        "path": "."
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

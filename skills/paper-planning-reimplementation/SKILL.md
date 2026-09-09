@@ -48,10 +48,11 @@ Produce a research implementation brief with these sections:
 5. scientific acceptance criteria; and
 6. engineering handoff notes.
 
-When the repository uses `superpowers/specs/`, persist the brief there with a
-descriptive `*-research-brief.md` name if the user requested a written artifact.
-Otherwise return the complete brief directly. Never overwrite or silently
-duplicate an existing spec or plan.
+In an initialized research repository, persist the brief under
+`superpowers/specs/` with a descriptive `*-research-brief.md` name when the
+user requests a written artifact. Otherwise return the complete brief directly.
+Never overwrite or silently duplicate an existing spec or plan, and do not
+write a competing brief outside the canonical `superpowers/specs/` root.
 
 Treat the brief as upstream evidence for Superpowers. When Superpowers skills
 are available, hand off the brief and its unresolved blockers to them for

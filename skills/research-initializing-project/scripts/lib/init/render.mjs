@@ -88,7 +88,32 @@ function renderPaperMain(manifest, template) {
     'title',
     latexEscape(manifest.projectName)
   );
-  return replaceLatexCommand(withTitle, 'author', latexEscape(authors));
+  const withAuthor = replaceLatexCommand(withTitle, 'author', latexEscape(authors));
+  const documentStart = withAuthor.search(/\\begin\s*\{document\}/);
+  const documentEnds = [...withAuthor.matchAll(/\\end\s*\{document\}/g)];
+  if (documentStart < 0 || documentEnds.length === 0) {
+    throw new Error('Template must contain a complete document environment');
+  }
+  const opening = /\\begin\s*\{document\}/.exec(withAuthor.slice(documentStart));
+  const bodyStart = documentStart + opening.index + opening[0].length;
+  const closing = documentEnds.at(-1);
+  if (closing.index < bodyStart) {
+    throw new Error('Template document environment is malformed');
+  }
+  const canonicalBody = `
+\\maketitle
+
+\\input{sections/abstract}
+\\input{sections/introduction}
+\\input{sections/related-work}
+\\input{sections/methodology}
+\\input{sections/experimental-results}
+\\input{sections/conclusion}
+
+\\bibliographystyle{IEEEtran}
+\\bibliography{references}
+`;
+  return `${withAuthor.slice(0, bodyStart)}${canonicalBody}${withAuthor.slice(closing.index)}`;
 }
 
 function renderers(manifest, template) {
@@ -107,7 +132,13 @@ function renderers(manifest, template) {
     'docs/experiments.md': () => `# Experiments\n\n## Research questions\n\n${markdownList(manifest.researchQuestions)}\n\n## Data sources\n\n${markdownList(manifest.dataSources)}\n`,
     'docs/reproduction.md': () => `# Reproduction\n\n## Environment\n\nNot specified. Record dependencies, commands, and random seeds here.\n\n## Evaluation procedure\n\nNot specified.\n`,
     'paper/main.tex': () => renderPaperMain(manifest, template),
-    'paper/references.bib': () => `@comment{Add bibliographic entries for ${bibTeXText(manifest.projectName)}.}\n`
+    'paper/references.bib': () => `@comment{Add bibliographic entries for ${bibTeXText(manifest.projectName)}.}\n`,
+    'paper/sections/abstract.tex': () => `\\begin{abstract}\n\n\\end{abstract}\n`,
+    'paper/sections/introduction.tex': () => `\\section{Introduction}\n`,
+    'paper/sections/related-work.tex': () => `\\section{Related Work}\n`,
+    'paper/sections/methodology.tex': () => `\\section{Methodology}\n`,
+    'paper/sections/experimental-results.tex': () => `\\section{Experimental Results}\n`,
+    'paper/sections/conclusion.tex': () => `\\section{Conclusion}\n`
   };
 }
 

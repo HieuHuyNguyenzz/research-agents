@@ -27,6 +27,12 @@ const manifest = {
   authors: 'Ada Lovelace, Grace Hopper',
   paperTemplate: 'ieee-conference'
 };
+const PAPER_BUNDLE = [
+  'paper/main.tex', 'paper/references.bib', 'paper/TEMPLATE.md',
+  'paper/sections/abstract.tex', 'paper/sections/introduction.tex',
+  'paper/sections/related-work.tex', 'paper/sections/methodology.tex',
+  'paper/sections/experimental-results.tex', 'paper/sections/conclusion.tex'
+];
 
 function fakeFetch() {
   return Promise.resolve(new Response(source));
@@ -205,7 +211,7 @@ test('skip mode does not fetch a template when all template files conflict', asy
       }
     });
 
-    for (const target of ['paper/main.tex', 'paper/references.bib', 'paper/TEMPLATE.md']) {
+    for (const target of PAPER_BUNDLE) {
       assert.ok(result.skipped.includes(target));
     }
     assert.ok(await stat(path.join(tempRoot, 'README.md')));
@@ -230,7 +236,7 @@ test('skip mode treats a partial paper bundle conflict atomically', async () => 
     });
 
     assert.equal(fetchCalls, 0);
-    for (const target of ['paper/main.tex', 'paper/references.bib', 'paper/TEMPLATE.md']) {
+    for (const target of PAPER_BUNDLE) {
       assert.ok(result.skipped.includes(target));
     }
     assert.deepEqual(result.unchanged, []);
@@ -258,7 +264,7 @@ test('skip mode treats a paper ancestor file blocker as an atomic bundle conflic
 
     assert.equal(fetchCalls, 0);
     assert.equal(result.template.sha256, null);
-    for (const target of ['paper/main.tex', 'paper/references.bib', 'paper/TEMPLATE.md']) {
+    for (const target of PAPER_BUNDLE) {
       assert.ok(result.skipped.includes(target));
     }
     assert.equal(await readFile(paperPath, 'utf8'), 'paper path blocker');
@@ -286,9 +292,7 @@ test('skip mode does not synthesize provenance for an incomplete generated bundl
     });
 
     assert.equal(fetchCalls, 0);
-    assert.deepEqual(result.skipped, [
-      'paper/main.tex', 'paper/references.bib', 'paper/TEMPLATE.md'
-    ]);
+    assert.deepEqual(result.skipped, PAPER_BUNDLE);
     assert.equal(result.template.sha256, null);
     const mainAfter = await readFile(mainPath, 'utf8');
     assert.equal(createHash('sha256').update(mainAfter).digest('hex'), createHash('sha256').update(mainBefore).digest('hex'));
@@ -686,13 +690,18 @@ test('CLI prints a stable JSON success report on stdout', async () => {
         'src/configs/ablations/.gitkeep', 'src/configs/experiments/.gitkeep', 'src/scripts/.gitkeep',
         'src/data/.gitkeep', 'tests/.gitkeep', 'results/raw/.gitkeep', 'results/processed/.gitkeep',
         'results/analysis/.gitkeep', 'results/figures/.gitkeep', 'results/tables/.gitkeep',
-        'paper/sections/.gitkeep', 'paper/figures/.gitkeep', 'paper/tables/.gitkeep',
+        'paper/figures/.gitkeep', 'paper/tables/.gitkeep',
         'paper/templates/.gitkeep', 'docs/notes/.gitkeep', 'superpowers/specs/.gitkeep',
         'superpowers/plans/.gitkeep', 'superpowers/decisions/.gitkeep'
       ],
-      skipped: ['paper/main.tex', 'paper/references.bib', 'paper/TEMPLATE.md'],
+      skipped: PAPER_BUNDLE,
       unchanged: [],
-      conflicts: ['paper/TEMPLATE.md', 'paper/main.tex', 'paper/references.bib'],
+      conflicts: [
+        'paper/TEMPLATE.md', 'paper/main.tex', 'paper/references.bib',
+        'paper/sections/abstract.tex', 'paper/sections/conclusion.tex',
+        'paper/sections/experimental-results.tex', 'paper/sections/introduction.tex',
+        'paper/sections/methodology.tex', 'paper/sections/related-work.tex'
+      ],
       template: {
         id: 'ieee-conference',
         sourceUrl: 'https://www.overleaf.com/latex/templates/ieee-conference-template/grfzhhncsfqn',

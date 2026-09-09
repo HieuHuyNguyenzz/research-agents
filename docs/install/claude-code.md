@@ -5,6 +5,11 @@ installer. The bundled `SessionStart` hook loads the bootstrap on startup,
 clear, and compact events. Do not edit personal `CLAUDE.md` files. Start a new
 session and ask the agent to list installed research skills.
 
+No additional Node.js or Python installation is required for Claude Code to
+read and execute the core skills. Python is needed only when the requested
+research task itself runs Python code, such as notebook-based experiment
+analysis.
+
 After discovery, use the [research workflow guide](../research-workflow.md) for
 the end-to-end sequence and the [skill reference](../skill-reference.md) for
 inputs, outputs, and example requests.
@@ -14,6 +19,8 @@ inputs, outputs, and example requests.
 Ask in natural language: `Initialize a research project.` The agent asks the
 initializer questionnaire one field at a time, shows the complete scaffold
 summary, and waits for your explicit confirmation before creating files.
+The agent can create the scaffold with its built-in file tools; the bundled
+Node.js initializer is an optional deterministic CLI, not a usage requirement.
 
 The selected IEEE template is downloaded from its configured source, so this
 step requires network access. The generated `paper/TEMPLATE.md` records the

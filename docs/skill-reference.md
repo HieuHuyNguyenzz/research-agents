@@ -10,10 +10,10 @@ within its documented ownership boundary.
 | Skill | Use it when | Give the agent | Expected result |
 | --- | --- | --- | --- |
 | `research-using-skills` | Beginning a task that may match an installed research workflow | The desired outcome and relevant paths | Selection and use of the appropriate specialized skill; no research artifact by itself |
-| `research-designing-study` | Turning an early idea into a testable study | Idea, constraints, available data/compute, and local notes | Confirmed study brief with questions, hypotheses, variables, claim-to-evidence mapping, feasibility, validity threats, and acceptance criteria |
-| `literature-synthesizing-evidence` | Comparing multiple papers or assessing a provisional gap | Explicit local PDF paths or named folders plus the synthesis question | Source inventory, cross-paper evidence matrix, thematic synthesis, bounded gap assessment, and optional `literature/synthesis.md` |
+| `research-designing-study` | Turning an early idea into a testable study | Idea, constraints, available data/compute, and local notes | Confirmed brief directly before initialization or `superpowers/specs/study-design.md` afterward |
+| `literature-synthesizing-evidence` | Comparing multiple papers or assessing a provisional gap | Explicit local PDF paths or named folders plus the synthesis question | Synthesis directly before initialization or optional `docs/notes/literature-synthesis.md` afterward |
 | `research-initializing-project` | Scaffolding a new research repository | Confirmed project details and preferred IEEE template | Reproducible repository layout after a one-question-at-a-time questionnaire and explicit confirmation |
-| `paper-reading` | Understanding one paper for engineering or scientific use | PDF, paper URL, DOI, supplement, or excerpt | Evidence-aware summary of claims, method, assumptions, protocol, reproducibility details, and uncertainties |
+| `paper-reading` | Understanding one paper for engineering or scientific use | PDF, paper URL, DOI, supplement, or excerpt | Evidence-aware summary directly or optional evidence map under `docs/notes/` |
 | `paper-planning-reimplementation` | Defining scientific requirements for reproducing a paper | Paper evidence map, target repository, scope, constraints, and available code | Research implementation brief for Superpowers or another engineering workflow; not a duplicate coding plan |
 
 Example requests:
@@ -30,7 +30,7 @@ Prepare the scientific implementation brief, then hand it to the engineering wor
 | Skill | Use it when | Give the agent | Expected result |
 | --- | --- | --- | --- |
 | `experiments-designing-configurations` | Claims need an evaluation protocol, run matrix, or runnable configs | Confirmed claims, current code/configs, resource constraints, completed-run evidence | Confirmed `core` and `supplementary` matrix, `docs/experiments.md`, runnable repository-native configs, blocked items, run counts, and unexecuted next commands |
-| `results-analyzing-experiments` | Metrics, logs, benchmarks, ablations, or repeated runs need analysis | Result paths, configs/protocol, metric meaning, and manuscript context | Data audit, evidence-backed findings, and normally one rerunnable notebook under `results/analysis/` |
+| `results-analyzing-experiments` | Metrics, logs, benchmarks, ablations, or repeated runs need analysis | `results/raw/`, configs/protocol, metric meaning, and manuscript context | Notebook under `results/analysis/`; requested exports under `results/figures/` and `results/tables/` |
 
 The experiment-design skill does not run training, full evaluation, or sweeps.
 When execution happens on another workstation, transfer the confirmed configs,
@@ -57,8 +57,9 @@ Check which planned runs are missing or inconsistent before comparing methods.
 | `paper-writing-abstract` | Summarizing a nearly complete manuscript | Stable problem, method, contributions, and headline results | `paper/sections/abstract.tex` |
 | `paper-reviewing` | Checking a complete manuscript before submission | Complete `paper/` tree plus code, configs, results, and provenance | Structured findings with severity, location, evidence, and recommendation; read-only by default |
 
-If the manuscript uses a verified noncanonical included section path, a writer
-updates that target instead of creating a duplicate. Writers preserve unrelated
+The initializer connects all canonical targets to `paper/main.tex`. If another
+manuscript uses a noncanonical include or inline section, a writer updates that
+reachable target instead of creating a duplicate. Writers preserve unrelated
 content and never invent a result, citation, dataset, or implementation detail.
 
 Example requests:

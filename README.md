@@ -8,7 +8,7 @@
   <p>
     <img alt="Version 0.2.0" src="https://img.shields.io/badge/version-0.2.0-6366f1?style=for-the-badge" />
     <img alt="16 research skills" src="https://img.shields.io/badge/research_skills-16-0ea5e9?style=for-the-badge" />
-    <img alt="Node.js 20 or newer" src="https://img.shields.io/badge/Node.js-20%2B-339933?style=for-the-badge&amp;logo=nodedotjs&amp;logoColor=white" />
+    <img alt="Runtime-free core skills" src="https://img.shields.io/badge/core_skills-runtime--free-0f766e?style=for-the-badge" />
     <img alt="MIT license" src="https://img.shields.io/badge/license-MIT-22c55e?style=for-the-badge" />
   </p>
   <p>
@@ -168,7 +168,8 @@ flowchart TD
    the source revision, environment, config, run ID, seed, and output provenance.
 4. `results-analyzing-experiments` reconciles recorded metrics, runs, baselines,
    and ablations, then creates or revises a rerunnable notebook under
-   `results/analysis/` when the task needs an artifact.
+   `results/analysis/` when the task needs an artifact. Requested exports go to
+   `results/figures/` and `results/tables/`.
 
 Example requests:
 
@@ -207,10 +208,12 @@ Prepare a complete manuscript in evidence-dependency order:
 10. `paper-reviewing`
 
 The six writers update their corresponding LaTeX targets under
-`paper/sections/` and preserve unrelated content. They do not invent results,
-citations, datasets, or implementation details. `paper-reviewing` inspects the
-complete paper and supporting repository, then reports structured findings
-without modifying files unless you explicitly request a separate fix.
+`paper/sections/`; the initializer wires all six into `paper/main.tex` in
+manuscript order. Writers trace the include graph and never create an
+unreachable parallel section. They preserve unrelated content and do not invent
+results, citations, datasets, or implementation details. `paper-reviewing`
+inspects the complete paper and supporting repository, then reports structured
+findings without modifying files unless you explicitly request a separate fix.
 
 Ask naturally: `Write the methodology section from the current code and configs.`
 
@@ -223,17 +226,21 @@ checklist.
 `research-initializing-project` creates a consistent research workspace:
 
 ```text
-src/          source code, configurations, scripts, and data
-tests/        automated tests
-results/      raw outputs, processed data, figures, tables, and analysis
-paper/        LaTeX entry point, sections, references, figures, and provenance
-docs/         architecture, methodology, experiments, and reproduction notes
-superpowers/  engineering specs, plans, and decisions
+src/core/                                      implementation
+src/configs/{baselines,proposed,ablations,experiments}/
+src/{data,scripts}/                            project data adapters and scripts
+tests/                                         automated tests
+results/{raw,processed,analysis,figures,tables}/
+paper/{sections,figures,tables,templates}/     manuscript artifacts
+docs/notes/                                    literature and paper evidence maps
+superpowers/{specs,plans,decisions}/           scientific and engineering briefs
 ```
 
-It also creates `README.md`, `AGENTS.md`, `.gitignore`, and `pyproject.toml` at
-the project root. Initialization is idempotent, detects ancestor and file
-conflicts, and requires explicit approval before overwriting existing content.
+It also creates the six canonical section files, `paper/main.tex`,
+`paper/references.bib`, `paper/TEMPLATE.md`, the four primary files under
+`docs/`, and `README.md`, `AGENTS.md`, `.gitignore`, and `pyproject.toml` at the
+project root. Initialization is idempotent, detects ancestor and file conflicts,
+and requires explicit approval before overwriting existing content.
 
 ## Design principles
 
@@ -262,24 +269,33 @@ conflicts, and requires explicit approval before overwriting existing content.
 
 ## Compatibility
 
-The shared initializer CLI targets Node.js 20+ and is covered by automated
-tests. Native installation, skill discovery, and clean-session behavior for
-Codex, Claude Code, and OpenCode remain **unverified** until a native smoke test
-with version, date, command, result, and evidence location is recorded.
+Using the core skills requires only a compatible coding agent. The agent reads
+the Markdown instructions and uses its built-in file, shell, and browsing tools;
+you do not need to install Node.js or Python just to use the workflows.
+
+Python is optional for workloads that actually execute Python code, including
+experiment analysis and Jupyter notebooks. The bundled initializer CLI and the
+repository's contributor test suite currently use Node.js 20+, but neither is
+required for agent-native skill execution.
+
+Native installation, skill discovery, and clean-session behavior for Codex,
+Claude Code, and OpenCode remain **unverified** until a native smoke test with
+version, date, command, result, and evidence location is recorded.
 
 See the [compatibility matrix](docs/compatibility.md) and platform-specific
 [tool mappings](references/tool-mapping/) for the precise evidence boundary.
 
 ## Development
 
-Requirements: Node.js 20 or newer.
+The following requirement applies only when developing or verifying this
+repository, not when using its skills: Node.js 20 or newer.
 
 ```bash
 npm run verify
 ```
 
-The verification gate validates portable skill content, runs the complete Node
-test suite, and exercises the initializer integration contract.
+The verification gate validates portable skill content, runs the complete test
+suite, and exercises the optional initializer CLI integration contract.
 
 ## Project status
 

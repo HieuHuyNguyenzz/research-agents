@@ -16,6 +16,12 @@ call a skill by its exact name.
 See the [skill reference](skill-reference.md) for inputs, outputs, and example
 requests for all skills.
 
+Once initialized, keep persisted workflow artifacts in the scaffold owned by
+`research-initializing-project`: evidence maps in `docs/notes/`, scientific
+briefs in `superpowers/specs/`, implementation in `src/`, experiment evidence
+in `results/`, and manuscript content in `paper/`. Before initialization,
+return briefs and syntheses directly rather than creating a partial repository.
+
 ## Choose an entry path
 
 Use the original-study path when the project begins with a research idea. Use
@@ -35,6 +41,10 @@ specific paper. The paths converge before implementation.
 4. Ask `research-initializing-project` to scaffold the repository only after
    the study brief is confirmed.
 
+After initialization, persist the confirmed design at
+`superpowers/specs/study-design.md` and literature synthesis at
+`docs/notes/literature-synthesis.md` when durable artifacts are needed.
+
 Example sequence:
 
 ```text
@@ -53,6 +63,9 @@ Initialize a research project from the confirmed design.
    scientific acceptance criteria.
 3. Pass that brief to Superpowers or another engineering workflow for software
    design, task decomposition, implementation, testing, and review.
+
+When persisted, keep the paper evidence map in `docs/notes/` and the research
+implementation brief in `superpowers/specs/`.
 
 Example sequence:
 
@@ -115,6 +128,7 @@ Ask `results-analyzing-experiments` to inspect the returned metrics, logs,
 baselines, ablations, repeated runs, and configs. Its default artifact is one
 rerunnable notebook under `results/analysis/` containing the data audit,
 summary tables, comparisons, uncertainty, and nonredundant figures.
+Requested exports belong in `results/figures/` and `results/tables/`.
 
 Example request:
 
@@ -142,7 +156,10 @@ For a full manuscript, the practical order is:
 8. `paper-reviewing` for an independent, read-only submission-readiness review.
 
 Writers update their existing LaTeX section target and preserve unrelated
-content. They must not invent citations, implementation details, or results.
+content. The initialized `paper/main.tex` includes all six canonical targets;
+for another layout, writers follow the actual include graph and do not create
+unreachable section files. They must not invent citations, implementation
+details, or results.
 See the [paper-writing guide](paper-writing.md) for section targets and the
 evidence policy.
 

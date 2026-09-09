@@ -11,10 +11,11 @@ analysis notebook as the default deliverable.
 
 ## Inputs
 
-Inspect `results/raw/`, `results/processed/`, existing analysis files and
-notebooks, logs, and user-provided notes or manuscript context. Preserve the
-intent of an existing notebook when revising it. Support common tabular and
-structured data such as CSV, TSV, JSON, JSONL, Parquet, XLSX, and text logs.
+Inspect `results/raw/`, `results/processed/`, `results/analysis/`,
+`docs/experiments.md`, the relevant `src/configs/` branches, logs, and
+user-provided notes or manuscript context. Preserve the intent of an existing
+notebook when revising it. Support common tabular and structured data such as
+CSV, TSV, JSON, JSONL, Parquet, XLSX, and text logs.
 
 ## Workflow
 
@@ -44,7 +45,10 @@ structured data such as CSV, TSV, JSON, JSONL, Parquet, XLSX, and text logs.
 - Do not claim causality, significance, or improvement beyond the evidence.
 - Use paper-ready labels, ordering, rounding, captions, and interpretations.
 - Keep figures and tables inside the notebook by default. Export sidecar files
-  only when the user requests them.
+  only when the user requests them, using `results/figures/` for figures and
+  `results/tables/` for tables. Copy publication-selected artifacts into
+  `paper/figures/` or `paper/tables/` only when the user explicitly requests a
+  manuscript handoff.
 - Use repository-relative paths, centralize reusable loading and plotting
   helpers, and provide graceful fallbacks for optional dependencies.
 - Avoid absolute paths, stale variables, hidden state, filler charts, and

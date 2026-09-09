@@ -56,7 +56,8 @@ test('literature synthesis keeps gap and novelty claims bounded', async () => {
 
 test('literature synthesis has a scoped artifact and downstream handoff', async () => {
   const text = await loadSkill();
-  assert.match(text, /`literature\/synthesis\.md`/i);
+  assert.match(text, /`docs\/notes\/literature-synthesis\.md`/i);
+  assert.match(text, /do not\s+create a separate top-level `literature\/` tree/i);
   assert.match(text, /Update `paper\/references\.bib` only when the user requests it/i);
   assert.match(text, /Pass the synthesis to `research-designing-study`/i);
   assert.match(text, /`paper-writing-introduction`, `paper-writing-related-work`/i);

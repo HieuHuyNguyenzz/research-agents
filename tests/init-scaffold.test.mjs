@@ -49,12 +49,15 @@ test('plans the complete research tree without touching disk', async () => {
     assert.deepEqual(plan.files, [
       'README.md', 'AGENTS.md', '.gitignore', 'pyproject.toml',
       'paper/main.tex', 'paper/references.bib', 'paper/TEMPLATE.md',
+      'paper/sections/abstract.tex', 'paper/sections/introduction.tex',
+      'paper/sections/related-work.tex', 'paper/sections/methodology.tex',
+      'paper/sections/experimental-results.tex', 'paper/sections/conclusion.tex',
       'docs/architecture.md', 'docs/methodology.md', 'docs/experiments.md', 'docs/reproduction.md',
       'src/core/.gitkeep', 'src/configs/baselines/.gitkeep', 'src/configs/proposed/.gitkeep',
       'src/configs/ablations/.gitkeep', 'src/configs/experiments/.gitkeep', 'src/scripts/.gitkeep',
       'src/data/.gitkeep', 'tests/.gitkeep', 'results/raw/.gitkeep', 'results/processed/.gitkeep',
       'results/analysis/.gitkeep', 'results/figures/.gitkeep', 'results/tables/.gitkeep',
-      'paper/sections/.gitkeep', 'paper/figures/.gitkeep', 'paper/tables/.gitkeep',
+      'paper/figures/.gitkeep', 'paper/tables/.gitkeep',
       'paper/templates/.gitkeep', 'docs/notes/.gitkeep', 'superpowers/specs/.gitkeep',
       'superpowers/plans/.gitkeep', 'superpowers/decisions/.gitkeep'
     ]);
@@ -90,6 +93,32 @@ test('renders metadata into README, docs, and paper entry point', () => {
   assert.match(renderFile('paper/main.tex', manifest, conferenceTemplate), /\\documentclass\[conference\]\{IEEEtran\}/);
   assert.match(renderFile('paper/main.tex', manifest, conferenceTemplate), /\\title\{Robust FL\}/);
   assert.match(renderFile('paper/main.tex', manifest, conferenceTemplate), /\\author\{Ada Lovelace, Grace Hopper\}/);
+  assert.match(renderFile('paper/main.tex', manifest, conferenceTemplate), /\\input\{sections\/abstract\}/);
+  assert.match(renderFile('paper/main.tex', manifest, conferenceTemplate), /\\input\{sections\/conclusion\}/);
+  assert.match(renderFile('paper/sections/abstract.tex', manifest), /\\begin\{abstract\}/);
+  assert.equal(renderFile('paper/sections/introduction.tex', manifest), '\\section{Introduction}\n');
+});
+
+test('replaces template sample body with the canonical manuscript include graph', () => {
+  const sampleTemplate = {
+    text: String.raw`\documentclass[conference]{IEEEtran}
+\title{Sample}
+\author{Sample Author}
+\begin{document}
+\maketitle
+\section{Template Sample Content}
+Remove this body.
+\end{document}
+`
+  };
+  const paper = renderFile('paper/main.tex', manifest, sampleTemplate);
+  assert.doesNotMatch(paper, /Template Sample Content|Remove this body/);
+  for (const section of [
+    'abstract', 'introduction', 'related-work', 'methodology',
+    'experimental-results', 'conclusion'
+  ]) {
+    assert.match(paper, new RegExp(`\\\\input\\{sections/${section}\\}`));
+  }
 });
 
 test('uses not specified markers and rejects unknown targets', () => {

@@ -11,16 +11,19 @@ experimental evidence.
 ## Inspect before editing
 
 Inspect the whole repository and the existing target first: project instructions,
-`README.md`, `docs/`, code, configs, tests, results, `paper/`, and
+`README.md`, `docs/experiments.md`, `src/configs/`, tests, `results/raw/`,
+`results/processed/`, `results/analysis/`, `results/figures/`,
+`results/tables/`, `paper/`, and
 `paper/references.bib`. Establish the manuscript's terminology and venue style.
 
 ## Shared edit contract
 
-- Write directly to `paper/sections/experimental-results.tex`; create it if
-  absent.
-- If the existing manuscript uses a noncanonical included section path, edit
-  that path rather than creating a parallel canonical file and report the
-  deviation.
+- Trace the include graph from `paper/main.tex` before writing. Write directly
+  to `paper/sections/experimental-results.tex` and create it if absent when the
+  canonical include points to it.
+- If the manuscript uses a noncanonical included file or an inline section in
+  `paper/main.tex`, edit that reachable target instead and report the deviation.
+  Do not create or update an unreachable parallel section file.
 - Preserve unrelated content and surrounding conventions. Update existing
   experimental results instead of appending a duplicate.
 - Separate observed evidence from interpretation. Mark missing evidence,

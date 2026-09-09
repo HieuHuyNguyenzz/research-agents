@@ -13,7 +13,13 @@ const CONFLICT_MODES = new Set(['abort', 'overwrite', 'skip']);
 const TEMPLATE_FILES = new Set([
   'paper/main.tex',
   'paper/references.bib',
-  'paper/TEMPLATE.md'
+  'paper/TEMPLATE.md',
+  'paper/sections/abstract.tex',
+  'paper/sections/introduction.tex',
+  'paper/sections/related-work.tex',
+  'paper/sections/methodology.tex',
+  'paper/sections/experimental-results.tex',
+  'paper/sections/conclusion.tex'
 ]);
 
 class CliArgumentError extends Error {}
@@ -126,6 +132,13 @@ async function classifyTemplateTargets(rootDir, plan, manifest, definition) {
             referencesText,
             retainedRetrievalTime(provenanceText)
           ) === provenanceText;
+      }
+      if (exactGeneratedSet) {
+        for (const relativePath of TEMPLATE_FILES) {
+          if (!relativePath.startsWith('paper/sections/')) continue;
+          exactGeneratedSet = existing.get(relativePath) === renderFile(relativePath, manifest);
+          if (!exactGeneratedSet) break;
+        }
       }
     } catch {
       exactGeneratedSet = false;
@@ -438,6 +451,11 @@ export async function runInit({
         mainText,
         referencesText
       ));
+      for (const relativePath of TEMPLATE_FILES) {
+        if (relativePath.startsWith('paper/sections/')) {
+          desired.set(relativePath, writeContent(relativePath, manifest, material));
+        }
+      }
     }
 
     const effectivePlan = {

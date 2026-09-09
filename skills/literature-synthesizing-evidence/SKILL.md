@@ -63,9 +63,12 @@ negative findings.
 ## Confirm and deliver
 
 Return a concise synthesis directly unless the user requests a persisted
-artifact. For a repository that has no established convention, use
-`literature/synthesis.md` after confirming the source set and target. Preserve
-an existing synthesis and update its relevant sections instead of appending a
+artifact. In an initialized research repository, write or update
+`docs/notes/literature-synthesis.md`; use another target only when an existing
+file inside `docs/notes/` already owns the synthesis. Before initialization,
+return the synthesis directly so it can inform the project manifest; do not
+create a separate top-level `literature/` tree. Confirm the source set and
+target, then preserve and update relevant sections instead of appending a
 duplicate review.
 
 Include:
