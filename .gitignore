@@ -1,2 +1,6 @@
 .DS_Store
 .superpowers/
+.opencode/.gitignore
+.opencode/package.json
+.opencode/package-lock.json
+.opencode/bun.lock
